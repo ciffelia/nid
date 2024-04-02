@@ -138,6 +138,8 @@ jobs:
           rustup toolchain install "$RUST_TOOLCHAIN"
           rustup override set "$RUST_TOOLCHAIN"
 
+      - uses: Swatinem/rust-cache@v2
+
       - run: cargo publish
         env:
           CARGO_REGISTRY_TOKEN: ${{ secrets.CARGO_REGISTRY_TOKEN }}
