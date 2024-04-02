@@ -75,8 +75,6 @@ jobs:
 
   clippy:
     runs-on: ubuntu-22.04
-    env:
-      DATABASE_URL: postgres://wctfd:wctfd@localhost:5432/wctfd_app
     steps:
       - uses: actions/checkout@v4
 
