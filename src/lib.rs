@@ -30,14 +30,16 @@
 //!
 //! ```
 //! use nid::Nanoid;
-//! let id: Nanoid = "3hYR3muA_xvjMrrrqFWxF".parse().unwrap();
+//! let id: Nanoid = "3hYR3muA_xvjMrrrqFWxF".parse()?;
+//! # Ok::<(), Box<dyn std::error::Error>>(())
 //! ```
 //!
 //! The length of the Nano ID is 21 by default, but you can change it by specifying the generic parameter:
 //!
 //! ```
 //! use nid::Nanoid;
-//! let id: Nanoid<10> = "j1-SOTHHxi".parse().unwrap();
+//! let id: Nanoid<10> = "j1-SOTHHxi".parse()?;
+//! # Ok::<(), Box<dyn std::error::Error>>(())
 //! ```
 //!
 //! You can also use a different alphabet:
@@ -56,11 +58,12 @@
 //! println!("{}", id1);
 //!
 //! // Parse a string into a Nano ID and convert it back to a string.
-//! let id2: Nanoid = "abcdefg1234567UVWXYZ_".parse().unwrap();
+//! let id2: Nanoid = "abcdefg1234567UVWXYZ_".parse()?;
 //! let s = id2.to_string();
 //!
 //! // Parse a string into a Nano ID with a different length and alphabet.
-//! let id3: Nanoid<9, Base62Alphabet> = "abc123XYZ".parse().unwrap();
+//! let id3: Nanoid<9, Base62Alphabet> = "abc123XYZ".parse()?;
+//! # Ok::<(), Box<dyn std::error::Error>>(())
 //! ```
 //!
 //! # Comparison with other implementations of Nano ID
@@ -95,11 +98,12 @@ use alphabet::{Alphabet, Base64UrlAlphabet};
 /// println!("{}", id1);
 ///
 /// // Parse a string into a Nano ID and convert it back to a string.
-/// let id2: Nanoid = "abcdefg1234567UVWXYZ_".parse().unwrap();
+/// let id2: Nanoid = "abcdefg1234567UVWXYZ_".parse()?;
 /// let s = id2.to_string();
 ///
 /// // Parse a string into a Nano ID with a different length and alphabet.
-/// let id3: Nanoid<9, Base62Alphabet> = "abc123XYZ".parse().unwrap();
+/// let id3: Nanoid<9, Base62Alphabet> = "abc123XYZ".parse()?;
+/// # Ok::<(), Box<dyn std::error::Error>>(())
 /// ```
 pub struct Nanoid<const N: usize = 21, A: Alphabet = Base64UrlAlphabet> {
     /// The Nano ID string. All characters are ASCII.
@@ -221,8 +225,9 @@ impl<const N: usize, A: Alphabet> Nanoid<N, A> {
     ///
     /// ```
     /// use nid::Nanoid;
-    /// let id: Nanoid = "Z9ifKfmBL7j69naN7hthu".parse().unwrap();
+    /// let id: Nanoid = "Z9ifKfmBL7j69naN7hthu".parse()?;
     /// assert_eq!(id.as_str(), "Z9ifKfmBL7j69naN7hthu");
+    /// # Ok::<(), Box<dyn std::error::Error>>(())
     /// ```
     pub const fn as_str(&self) -> &str {
         // SAFETY: all characters are ASCII.
