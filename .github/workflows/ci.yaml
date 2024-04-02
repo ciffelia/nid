@@ -97,3 +97,12 @@ jobs:
         with:
           name: documentation
           path: target/doc
+
+  msrv:
+    runs-on: ubuntu-22.04
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: cargo-bins/cargo-binstall@main
+
+      - run: cargo msrv
