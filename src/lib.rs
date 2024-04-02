@@ -266,18 +266,7 @@ impl<const N: usize, A: Alphabet> Nanoid<N, A> {
     }
 
     /// Get the string representation of the [`Nanoid`].
-    ///
-    /// You can also use the [`AsRef<str>`] or [`Into<String>`] trait to get the string representation.
-    ///
-    /// # Examples
-    ///
-    /// ```
-    /// use nid::Nanoid;
-    /// let id: Nanoid = "Z9ifKfmBL7j69naN7hthu".parse()?;
-    /// assert_eq!(id.as_str(), "Z9ifKfmBL7j69naN7hthu");
-    /// # Ok::<(), Box<dyn std::error::Error>>(())
-    /// ```
-    pub const fn as_str(&self) -> &str {
+    const fn as_str(&self) -> &str {
         // SAFETY: all characters are ASCII.
         unsafe { std::str::from_utf8_unchecked(&self.inner) }
     }
