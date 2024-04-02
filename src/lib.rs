@@ -354,6 +354,7 @@ impl<const N: usize, A: Alphabet> std::str::FromStr for Nanoid<N, A> {
     }
 }
 
+#[cfg(feature = "serde")]
 impl<const N: usize, A: Alphabet> serde::Serialize for Nanoid<N, A> {
     fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
     where
@@ -363,6 +364,7 @@ impl<const N: usize, A: Alphabet> serde::Serialize for Nanoid<N, A> {
     }
 }
 
+#[cfg(feature = "serde")]
 impl<'de, const N: usize, A: Alphabet> serde::Deserialize<'de> for Nanoid<N, A> {
     fn deserialize<D>(deserializer: D) -> Result<Nanoid<N, A>, D::Error>
     where
@@ -678,6 +680,7 @@ mod tests {
         inner::<12, Base58Alphabet>("abcdefghijkl", b'l');
     }
 
+    #[cfg(feature = "serde")]
     #[test]
     fn test_serialize() {
         fn inner<const N: usize, A: Alphabet>(s: &str, expected_serialized: &str) {
@@ -694,6 +697,7 @@ mod tests {
         inner::<12, Base58Alphabet>("abc123XYZ123", "\"abc123XYZ123\"");
     }
 
+    #[cfg(feature = "serde")]
     #[test]
     fn test_deserialize_valid() {
         fn inner<const N: usize, A: Alphabet>(serialized: &str, expected_id: &str) {
@@ -709,6 +713,7 @@ mod tests {
         inner::<12, Base58Alphabet>("\"abc123XYZ123\"", "abc123XYZ123");
     }
 
+    #[cfg(feature = "serde")]
     #[test]
     fn test_deserialize_invalid() {
         fn inner<const N: usize, A: Alphabet>(serialized: &str) {
