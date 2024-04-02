@@ -108,7 +108,7 @@ jobs:
       - name: Install cargo-msrv
         run: cargo binstall --version 0.15.1 --no-confirm cargo-msrv
 
-      - run: cargo msrv
+      - run: cargo msrv verify
 
   readme:
     runs-on: ubuntu-22.04
