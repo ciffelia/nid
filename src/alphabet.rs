@@ -1,8 +1,32 @@
 //! This module defines the [`Alphabet`] trait and provides implementations for the most common alphabets used in Nano ID.
 //!
-//! An alphabet is a set of symbols that can be used in Nano ID. In this crate, all symbols are ASCII characters.
+//! An alphabet is a set of symbols that can be used in Nano ID. In this crate, only ASCII characters can be used as symbols.
+//!
+//! The default alphabet used in Nano ID is [`Base64UrlAlphabet`], which contains `A-Za-z0-9_-` symbols.
+//!
+//! # Examples
+//!
+//! ```rust
+//! use nid::{alphabet::{Base36Alphabet, Base58Alphabet}, Nanoid};
+//!
+//! // Use the default Base64URL alphabet, which contains `A-Za-z0-9_-` symbols.
+//! type ShopId = Nanoid<9>;
+//! let id: ShopId = Nanoid::new();
+//! let id: ShopId = "kP_IH1DPM".parse()?;
+//!
+//! // Use Base36 alphabet, which contains `A-Z0-9` symbols.
+//! type UserId = Nanoid<21, Base36Alphabet>;
+//! let id: UserId = Nanoid::new();
+//! let id: UserId = "NDBIZRQSB6OGXJS06AN5L".parse()?;
+//!
+//! // Use Base58 alphabet, which contains `A-Za-z0-9` symbols excluding `0OlI`.
+//! type ItemId = Nanoid<16, Base58Alphabet>;
+//! let id: ItemId = Nanoid::new();
+//! let id: ItemId = "96MrjhHuWXJMLCKh".parse()?;
+//! # Ok::<(), Box<dyn std::error::Error>>(())
+//! ```
 
-/// A set of symbols that can be used in Nano ID. All symbols must be ASCII characters.
+/// A set of symbols that can be used in Nano ID. In this crate, only ASCII characters can be used as symbols.
 ///
 /// For the list of available alphabets, see the [`alphabet`](crate::alphabet) module.
 ///
@@ -20,7 +44,14 @@ pub trait Alphabet {
 
 macro_rules! define_and_impl_alphabet {
     ($name:ident, $symbols:expr, $description:expr $(,)?) => {
-        #[doc = concat!(" ", $description)]
+        #[doc = concat!(" ", $description, "
+
+ # Example
+ 
+ ```rust
+ use nid::{alphabet::", stringify!($name), ", Nanoid};
+ let id: Nanoid<21, ", stringify!($name), "> = Nanoid::new();
+ ```")]
         #[derive(Debug)]
         pub struct $name;
 

@@ -69,9 +69,9 @@
 //! # Comparison with other implementations of Nano ID
 //!
 //! [`nanoid`](https://docs.rs/nanoid) and [`nano-id`](https://docs.rs/nano-id) are other implementations of Nano ID in Rust.
-//! The main difference between `nid` and the other implementations is that `nid` has a type [`Nanoid`] to represent Nano IDs.
+//! The main difference between `nid` and the other implementations is that `nid` has [`Nanoid`] type to represent Nano IDs.
 //! This type provides a safe way to generate and parse Nano IDs.
-//! This is similar to the [`uuid`](https://docs.rs/uuid) crate, which provides a type [`Uuid`](https://docs.rs/uuid/latest/uuid/struct.Uuid.html) to represent UUIDs.
+//! This is similar to [`uuid`](https://docs.rs/uuid) crate, which provides [`Uuid`](https://docs.rs/uuid/latest/uuid/struct.Uuid.html) type to represent UUIDs.
 
 #![deny(missing_debug_implementations, missing_docs)]
 
