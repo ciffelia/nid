@@ -28,7 +28,7 @@ use nid::Nanoid;
 let id: Nanoid = Nanoid::new();
 ```
 
-You can parse a string into a Nano ID using the [`FromStr`](std::str::FromStr) or [`TryFrom`] trait.
+You can parse a string into a Nano ID using the [`std::str::FromStr`] or [`TryFrom`] trait.
 
 ```rust
 use nid::Nanoid;
@@ -73,6 +73,12 @@ let id: Nanoid<9, Base62Alphabet> = "abc123XYZ".parse()?;
 The main difference between `nid` and the other implementations is that `nid` has [`Nanoid`] type to represent Nano IDs.
 This type provides a safe way to generate and parse Nano IDs.
 This is similar to [`uuid`](https://docs.rs/uuid) crate, which provides [`Uuid`](https://docs.rs/uuid/latest/uuid/struct.Uuid.html) type to represent UUIDs.
+
+[`Nanoid::new`]: https://docs.rs/nid/latest/nid/struct.Nanoid.html#method.new
+[`std::str::FromStr`]: https://doc.rust-lang.org/nightly/core/str/traits/trait.FromStr.html
+[`TryFrom`]: https://doc.rust-lang.org/nightly/core/str/traits/trait.FromStr.html
+[`alphabet`]: https://docs.rs/nid/latest/nid/alphabet/index.html
+[`Nanoid`]: https://docs.rs/nid/latest/nid/struct.Nanoid.html
 
 ## License
 

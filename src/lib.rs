@@ -26,7 +26,7 @@
 //! let id: Nanoid = Nanoid::new();
 //! ```
 //!
-//! You can parse a string into a Nano ID using the [`FromStr`](std::str::FromStr) or [`TryFrom`] trait.
+//! You can parse a string into a Nano ID using the [`std::str::FromStr`] or [`TryFrom`] trait.
 //!
 //! ```
 //! use nid::Nanoid;
@@ -101,7 +101,7 @@ use alphabet::{Alphabet, Base64UrlAlphabet};
 ///
 /// # Parsing
 ///
-/// You can parse a string into a Nano ID using the [`FromStr`](std::str::FromStr) or [`TryFrom`] trait.
+/// You can parse a string into a Nano ID using the [`std::str::FromStr`] or [`TryFrom`] trait.
 ///
 /// ```
 /// use nid::Nanoid;

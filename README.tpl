@@ -2,6 +2,12 @@
 
 {{readme}}
 
+[`Nanoid::new`]: https://docs.rs/nid/latest/nid/struct.Nanoid.html#method.new
+[`std::str::FromStr`]: https://doc.rust-lang.org/nightly/core/str/traits/trait.FromStr.html
+[`TryFrom`]: https://doc.rust-lang.org/nightly/core/str/traits/trait.FromStr.html
+[`alphabet`]: https://docs.rs/nid/latest/nid/alphabet/index.html
+[`Nanoid`]: https://docs.rs/nid/latest/nid/struct.Nanoid.html
+
 ## License
 
 Licensed under either of
