@@ -16,25 +16,26 @@
 //!
 //! ```toml
 //! [dependencies]
-//! # TODO
+//! nid = "0.1.0"
 //! ```
 //!
-//! When you want a new Nano ID, you can generate one using the [`Nanoid::new`] method:
+//! When you want a new Nano ID, you can generate one using the [`Nanoid::new`] method.
 //!
 //! ```
 //! use nid::Nanoid;
 //! let id: Nanoid = Nanoid::new();
 //! ```
 //!
-//! You can also parse a string into a Nano ID using the [`FromStr`](std::str::FromStr) trait:
+//! You can parse a string into a Nano ID using the [`FromStr`](std::str::FromStr) or [`TryFrom`] trait.
 //!
 //! ```
 //! use nid::Nanoid;
 //! let id: Nanoid = "3hYR3muA_xvjMrrrqFWxF".parse()?;
+//! let id: Nanoid = "iH26rJ8CpRz-gfIh7TSRu".to_string().try_into()?;
 //! # Ok::<(), Box<dyn std::error::Error>>(())
 //! ```
 //!
-//! The length of the Nano ID is 21 by default, but you can change it by specifying the generic parameter:
+//! The length of the Nano ID is 21 by default, but you can change it by specifying the generic parameter.
 //!
 //! ```
 //! use nid::Nanoid;
@@ -42,12 +43,13 @@
 //! # Ok::<(), Box<dyn std::error::Error>>(())
 //! ```
 //!
-//! You can also use a different alphabet:
+//! You can also use a different alphabet. The list of available alphabets is in the [`alphabet`] module.
 //!
 //! ```
 //! use nid::{alphabet::Base62Alphabet, Nanoid};
 //! let id: Nanoid<10, Base62Alphabet> = Nanoid::new();
 //! ```
+//!
 //! # Examples
 //!
 //! ```
@@ -88,6 +90,50 @@ use alphabet::{Alphabet, Base64UrlAlphabet};
 /// - `N`: The length of the Nano ID. The default is `21`.
 /// - `A`: The alphabet used in the Nano ID. The default is [`Base64UrlAlphabet`].
 ///
+/// # Generating
+///
+/// When you want a new Nano ID, you can generate one using the [`Nanoid::new`].
+///
+/// ```
+/// use nid::Nanoid;
+/// let id: Nanoid = Nanoid::new();
+/// ```
+///
+/// # Parsing
+///
+/// You can parse a string into a Nano ID using the [`FromStr`](std::str::FromStr) or [`TryFrom`] trait.
+///
+/// ```
+/// use nid::Nanoid;
+/// let id: Nanoid = "3hYR3muA_xvjMrrrqFWxF".parse()?;
+/// let id: Nanoid = "iH26rJ8CpRz-gfIh7TSRu".to_string().try_into()?;
+/// # Ok::<(), Box<dyn std::error::Error>>(())
+/// ```
+///
+/// If you try to parse an invalid Nano ID, you will get an error.
+///
+/// ```
+/// use nid::{Nanoid, ParseError};
+///
+/// let result: Result<Nanoid, _> = "61psxw-too_short".parse();
+/// assert!(matches!(result, Err(ParseError::InvalidLength { .. })));
+///
+/// let result: Result<Nanoid, _> = "6yt_invalid_char#####".to_string().try_into();
+/// assert!(matches!(result, Err(ParseError::InvalidCharacter(_))));
+/// ```
+///
+/// # Converting to a string
+///
+/// You can get the string representation of the Nano ID using the [`AsRef`] or [`Display`](std::fmt::Display) trait.
+///
+/// ```
+/// use nid::Nanoid;
+/// let id: Nanoid = "Z9ifKfmBL7j69naN7hthu".parse()?;
+/// assert_eq!(id.as_ref(), "Z9ifKfmBL7j69naN7hthu");
+/// assert_eq!(id.to_string(), "Z9ifKfmBL7j69naN7hthu");
+/// # Ok::<(), Box<dyn std::error::Error>>(())
+/// ```
+///
 /// # Examples
 ///
 /// ```
@@ -112,7 +158,7 @@ pub struct Nanoid<const N: usize = 21, A: Alphabet = Base64UrlAlphabet> {
     _marker: PhantomData<fn() -> A>,
 }
 
-/// An error that can occur when parsing a Nano ID.
+/// An error that can occur when parsing a string into a Nano ID.
 #[derive(Debug, thiserror::Error)]
 pub enum ParseError {
     /// The length of the provided value is not equal to the expected length.
@@ -130,7 +176,7 @@ pub enum ParseError {
 }
 
 impl<const N: usize, A: Alphabet> Nanoid<N, A> {
-    /// Generate a new instance of [`Nanoid`] using random number generator seeded by the system.
+    /// Generate a new Nano ID using random number generator seeded by the system.
     ///
     /// # Examples
     ///
@@ -141,15 +187,16 @@ impl<const N: usize, A: Alphabet> Nanoid<N, A> {
     ///
     /// # Panics
     ///
-    /// The function will panic if the random number generator is not able to generate random numbers
-    /// or the provided alphabet produces non-ascii characters.
+    /// The function will panic if the random number generator is not able to generate random numbers.
+    /// This function also panics if the provided [`Alphabet`] produces non-ascii characters, but this
+    /// never happens unless the alphabet is implemented incorrectly.
     #[allow(clippy::new_without_default)]
     #[must_use]
     pub fn new() -> Self {
         Self::new_with(rand::thread_rng())
     }
 
-    /// Generate a new instance of [`Nanoid`] using the provided random number generator.
+    /// Generate a new Nano ID using the provided random number generator.
     ///
     /// # Examples
     ///
@@ -160,8 +207,9 @@ impl<const N: usize, A: Alphabet> Nanoid<N, A> {
     ///
     /// # Panics
     ///
-    /// The function will panic if the provided random number generator is not able to generate random numbers
-    /// or the provided alphabet produces non-ascii characters.
+    /// The function will panic if the provided random number generator is not able to generate random numbers.
+    /// This function also panics if the provided [`Alphabet`] produces non-ascii characters, but this
+    /// never happens unless the alphabet is implemented incorrectly.
     #[must_use]
     pub fn new_with(mut rng: impl rand::Rng) -> Self {
         // SAFETY: The `assume_init` is safe because the type we are claiming to have initialized
