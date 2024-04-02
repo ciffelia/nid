@@ -1,5 +1,3 @@
-max_width = 100
 imports_granularity = "Crate"
-use_small_heuristics = "Default"
 group_imports = "StdExternalCrate"
 format_strings = true
