@@ -77,3 +77,23 @@ jobs:
 
       - name: cargo test
         run: cargo test --no-fail-fast --workspace --all-features
+
+  doc:
+    runs-on: ubuntu-22.04
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup Rust
+        run: |
+          rustup set profile minimal
+          rustup toolchain install "$RUST_TOOLCHAIN"
+          rustup override set "$RUST_TOOLCHAIN"
+
+      - name: cargo doc
+        run: cargo doc --no-deps --document-private-items --all-features
+
+      - name: Upload documentation
+        uses: actions/upload-artifact@v4
+        with:
+          name: documentation
+          path: target/doc
