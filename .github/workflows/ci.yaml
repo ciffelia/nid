@@ -105,4 +105,7 @@ jobs:
 
       - uses: cargo-bins/cargo-binstall@main
 
+      - name: Install cargo-msrv
+        run: cargo binstall --version 0.15.1 --no-confirm cargo-msrv
+
       - run: cargo msrv
