@@ -1,0 +1,11 @@
+{
+  $schema: 'https://docs.renovatebot.com/renovate-schema.json',
+  extends: [
+    'config:recommended',
+    ':prHourlyLimitNone',
+    ':prConcurrentLimitNone',
+    ':dependencyDashboardApproval',
+  ],
+  timezone: 'Asia/Tokyo',
+  schedule: ['before 9am on Saturday'],
+}
