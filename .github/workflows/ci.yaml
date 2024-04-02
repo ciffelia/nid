@@ -13,6 +13,7 @@ permissions:
 env:
   RUST_TOOLCHAIN: '1.77.1'
   RUST_TOOLCHAIN_RUSTFMT: nightly
+  RUST_TOOLCHAIN_MSRV: '1.61'
   CARGO_TERM_COLOR: always
 
 jobs:
@@ -103,13 +104,16 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      - name: Install cargo-hack
-        uses: taiki-e/install-action@v2
-        with:
-          tool: cargo-hack
+      - name: Setup Rust
+        run: |
+          rustup set profile minimal
+          rustup toolchain install "$RUST_TOOLCHAIN_MSRV"
+          rustup override set "$RUST_TOOLCHAIN_MSRV"
 
-      - name: Verify MSRV
-        run: cargo hack check --rust-version --workspace --all-targets --ignore-private
+      - uses: Swatinem/rust-cache@v2
+
+      - name: cargo check
+        run: cargo check --all-targets --all-features
 
   readme:
     runs-on: ubuntu-22.04
