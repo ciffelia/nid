@@ -103,12 +103,13 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      - uses: cargo-bins/cargo-binstall@main
+      - name: Install cargo-hack
+        uses: taiki-e/install-action@v2
+        with:
+          tool: cargo-hack
 
-      - name: Install cargo-msrv
-        run: cargo binstall --version 0.15.1 --no-confirm cargo-msrv
-
-      - run: cargo msrv verify
+      - name: Verify MSRV
+        run: cargo hack check --rust-version --workspace --all-targets --ignore-private
 
   readme:
     runs-on: ubuntu-22.04
