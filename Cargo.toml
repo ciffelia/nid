@@ -2,7 +2,12 @@
 name = "nid"
 version = "0.1.0"
 edition = "2021"
+description = "Generate and parse Nano IDs"
+repository = "https://github.com/ciffelia/nid"
 license = "MIT OR Apache-2.0"
+keywords = ["nanoid", "unique", "id", "uuid"]
+categories = ["data-structures", "parser-implementations"]
+exclude = ["/.github", "/.gitignore"]
 
 [dependencies]
 thiserror = "1.0.56"
