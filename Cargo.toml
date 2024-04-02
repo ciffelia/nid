@@ -10,10 +10,10 @@ categories = ["data-structures", "parser-implementations"]
 exclude = ["/.github", "/.gitignore"]
 
 [dependencies]
-thiserror = "1.0.56"
-serde = "1.0.195"
+thiserror = "1.0"
+serde = "1.0"
 rand = "0.8.5"
 
 [dev-dependencies]
-serde_json = "1.0.114"
-pretty_assertions = "1.4.0"
+serde_json = "1.0"
+pretty_assertions = "1.4"
