@@ -13,7 +13,6 @@ permissions:
 env:
   RUST_TOOLCHAIN: '1.77.1'
   RUST_TOOLCHAIN_RUSTFMT: nightly
-  RUST_TOOLCHAIN_MSRV: '1.61'
   CARGO_TERM_COLOR: always
 
 jobs:
@@ -106,6 +105,7 @@ jobs:
 
       - name: Setup Rust
         run: |
+          export RUST_TOOLCHAIN_MSRV=$(cargo read-manifest | jq -r '.rust_version')
           rustup set profile minimal
           rustup toolchain install "$RUST_TOOLCHAIN_MSRV"
           rustup override set "$RUST_TOOLCHAIN_MSRV"
