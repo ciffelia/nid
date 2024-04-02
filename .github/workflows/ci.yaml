@@ -109,3 +109,18 @@ jobs:
         run: cargo binstall --version 0.15.1 --no-confirm cargo-msrv
 
       - run: cargo msrv
+
+  readme:
+    runs-on: ubuntu-22.04
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: cargo-bins/cargo-binstall@main
+
+      - name: Install cargo-readme
+        run: cargo binstall --version 3.3.1 --no-confirm cargo-readme
+
+      - run: cargo readme > README.md
+
+      - name: Check if README.md is up-to-date
+        run: git diff --exit-code README.md
