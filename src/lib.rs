@@ -54,15 +54,15 @@
 //! use nid::{alphabet::Base62Alphabet, Nanoid};
 //!
 //! // Generate a new Nano ID and print it.
-//! let id1: Nanoid = Nanoid::new();
-//! println!("{}", id1);
+//! let id: Nanoid = Nanoid::new();
+//! println!("{}", id);
 //!
 //! // Parse a string into a Nano ID and convert it back to a string.
-//! let id2: Nanoid = "abcdefg1234567UVWXYZ_".parse()?;
-//! let s = id2.to_string();
+//! let id: Nanoid = "abcdefg1234567UVWXYZ_".parse()?;
+//! let s = id.to_string();
 //!
 //! // Parse a string into a Nano ID with a different length and alphabet.
-//! let id3: Nanoid<9, Base62Alphabet> = "abc123XYZ".parse()?;
+//! let id: Nanoid<9, Base62Alphabet> = "abc123XYZ".parse()?;
 //! # Ok::<(), Box<dyn std::error::Error>>(())
 //! ```
 //!
@@ -94,15 +94,15 @@ use alphabet::{Alphabet, Base64UrlAlphabet};
 /// use nid::{alphabet::Base62Alphabet, Nanoid};
 ///
 /// // Generate a new Nano ID and print it.
-/// let id1: Nanoid = Nanoid::new();
-/// println!("{}", id1);
+/// let id: Nanoid = Nanoid::new();
+/// println!("{}", id);
 ///
 /// // Parse a string into a Nano ID and convert it back to a string.
-/// let id2: Nanoid = "abcdefg1234567UVWXYZ_".parse()?;
-/// let s = id2.to_string();
+/// let id: Nanoid = "abcdefg1234567UVWXYZ_".parse()?;
+/// let s = id.to_string();
 ///
 /// // Parse a string into a Nano ID with a different length and alphabet.
-/// let id3: Nanoid<9, Base62Alphabet> = "abc123XYZ".parse()?;
+/// let id: Nanoid<9, Base62Alphabet> = "abc123XYZ".parse()?;
 /// # Ok::<(), Box<dyn std::error::Error>>(())
 /// ```
 pub struct Nanoid<const N: usize = 21, A: Alphabet = Base64UrlAlphabet> {
