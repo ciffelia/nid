@@ -81,7 +81,7 @@ pub mod alphabet;
 
 use std::{marker::PhantomData, mem::MaybeUninit};
 
-use alphabet::{Alphabet, Base64UrlAlphabet};
+use alphabet::{Alphabet, AlphabetExt, Base64UrlAlphabet};
 
 /// A Nano ID.
 ///
@@ -217,11 +217,9 @@ impl<const N: usize, A: Alphabet> Nanoid<N, A> {
         // cf. https://doc.rust-lang.org/std/mem/union.MaybeUninit.html#initializing-an-array-element-by-element
         let mut buf: [MaybeUninit<u8>; N] = unsafe { MaybeUninit::uninit().assume_init() };
 
-        let distr = rand::distributions::Uniform::from(0..A::len());
+        let distr = rand::distributions::Uniform::from(0..A::VALID_SYMBOL_LIST.len());
         for b in &mut buf {
-            let s = A::get(rng.sample(distr));
-            assert!(s.is_ascii(), "the alphabet contains non-ascii characters");
-            b.write(s);
+            b.write(A::VALID_SYMBOL_LIST[rng.sample(distr)]);
         }
 
         // Convert `MaybeUninit<u8>` to `u8`. `MaybeUninit::assume_init` doesn't work due to the limitation of the compiler.
@@ -254,7 +252,7 @@ impl<const N: usize, A: Alphabet> Nanoid<N, A> {
     /// Try to parse a byte array into a [`Nanoid`].
     fn try_from_bytes(buf: [u8; N]) -> Result<Self, ParseError> {
         for b in buf {
-            if !b.is_ascii() || !A::contains(b) {
+            if !b.is_ascii() || !A::VALID_SYMBOL_MAP[b as usize] {
                 return Err(ParseError::InvalidCharacter(b));
             }
         }
@@ -412,7 +410,7 @@ mod tests {
                 }
             }
 
-            assert_eq!(counts.len(), A::len());
+            assert_eq!(counts.len(), A::VALID_SYMBOL_LIST.len());
 
             let max_count = counts.values().max().unwrap();
             let min_count = counts.values().min().unwrap();
@@ -426,27 +424,6 @@ mod tests {
         inner::<6, Base64UrlAlphabet>(400_000);
         inner::<10, Base62Alphabet>(200_000);
         inner::<12, Base58Alphabet>(200_000);
-    }
-
-    #[test]
-    #[should_panic]
-    fn test_new_invalid_alphabet() {
-        struct InvalidAlphabet;
-        impl Alphabet for InvalidAlphabet {
-            fn len() -> usize {
-                1
-            }
-
-            fn get(index: usize) -> u8 {
-                [b'\xa0'][index]
-            }
-
-            fn contains(symbol: u8) -> bool {
-                symbol == b'\xa0'
-            }
-        }
-
-        let _ = Nanoid::<21, InvalidAlphabet>::new();
     }
 
     #[test]
