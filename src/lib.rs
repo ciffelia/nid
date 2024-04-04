@@ -236,25 +236,43 @@ impl<const N: usize, A: Alphabet> Nanoid<N, A> {
         }
     }
 
-    /// Try to parse a string into a [`Nanoid`].
-    fn try_from_str(s: &str) -> Result<Self, ParseError> {
-        let buf = s
-            .as_bytes()
-            .try_into()
-            .map_err(|_| ParseError::InvalidLength {
+    /// Parse a string into a [`Nanoid`].
+    ///
+    /// # Errors
+    ///
+    /// - If the length of the string is not equal to the expected length, this method returns [`ParseError::InvalidLength`].
+    /// - If the string contains a character that is not in the alphabet, this method returns [`ParseError::InvalidCharacter`].
+    pub const fn try_from_str(s: &str) -> Result<Self, ParseError> {
+        let s = s.as_bytes();
+
+        // This conversion is copied from the `TryFrom` implementation. We can't call `try_from` here because it's not const.
+        // https://github.com/rust-lang/rust/blob/7cf61ebde7b22796c69757901dd346d0fe70bd97/library/core/src/array/mod.rs#L250-L264
+        let buf = if s.len() == N {
+            let ptr = s.as_ptr() as *const [u8; N];
+            // SAFETY: ok because we just checked that the length fits
+            unsafe { *ptr }
+        } else {
+            return Err(ParseError::InvalidLength {
                 expected: N,
                 actual: s.len(),
-            })?;
+            });
+        };
 
         Self::try_from_bytes(buf)
     }
 
-    /// Try to parse a byte array into a [`Nanoid`].
-    fn try_from_bytes(buf: [u8; N]) -> Result<Self, ParseError> {
-        for b in buf {
-            if !b.is_ascii() || !A::VALID_SYMBOL_MAP[b as usize] {
-                return Err(ParseError::InvalidCharacter(b));
+    /// Parse a byte array into a [`Nanoid`].
+    ///
+    /// # Errors
+    ///
+    /// If the byte array contains a character that is not in the alphabet, this method returns [`ParseError::InvalidCharacter`].
+    pub const fn try_from_bytes(buf: [u8; N]) -> Result<Self, ParseError> {
+        let mut i = 0;
+        while i < N {
+            if buf[i] >= A::VALID_SYMBOL_MAP.len() as u8 || !A::VALID_SYMBOL_MAP[buf[i] as usize] {
+                return Err(ParseError::InvalidCharacter(buf[i]));
             }
+            i += 1;
         }
 
         Ok(Nanoid {
