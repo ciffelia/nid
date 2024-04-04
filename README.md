@@ -80,6 +80,10 @@ let s = id.to_string();
 let id: Nanoid<9, Base62Alphabet> = "abc123XYZ".parse()?;
 ```
 
+## Features
+
+- `serde`: Enable serialization and deserialization using the [`serde`] crate.
+
 ## Comparison with other implementations of Nano ID
 
 [`nanoid`](https://docs.rs/nanoid) and [`nano-id`](https://docs.rs/nano-id) are other implementations of Nano ID in Rust.
