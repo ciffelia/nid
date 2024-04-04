@@ -41,6 +41,14 @@ let id: Nanoid = "3hYR3muA_xvjMrrrqFWxF".parse()?;
 let id: Nanoid = "iH26rJ8CpRz-gfIh7TSRu".to_string().try_into()?;
 ```
 
+If you have a constant Nano ID, you can use the [`nanoid`] macro to parse it at compile time.
+
+```rust
+use nid::nanoid;
+let id = nanoid!("ClCrhcvy5kviH5ZozARfi");
+const ID: Nanoid = nanoid!("9vZZWqFI_rTou3Mutq1LH");
+```
+
 The length of the Nano ID is 21 by default, but you can change it by specifying the generic parameter.
 
 ```rust
@@ -82,6 +90,7 @@ This is similar to [`uuid`](https://docs.rs/uuid) crate, which provides [`Uuid`]
 [`Nanoid::new`]: https://docs.rs/nid/latest/nid/struct.Nanoid.html#method.new
 [`std::str::FromStr`]: https://doc.rust-lang.org/nightly/core/str/traits/trait.FromStr.html
 [`TryFrom`]: https://doc.rust-lang.org/nightly/core/str/traits/trait.FromStr.html
+[`nanoid`]: https://docs.rs/nid/latest/nid/macro.nanoid.html
 [`alphabet`]: https://docs.rs/nid/latest/nid/alphabet/index.html
 [`Nanoid`]: https://docs.rs/nid/latest/nid/struct.Nanoid.html
 
