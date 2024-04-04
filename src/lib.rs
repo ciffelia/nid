@@ -78,7 +78,7 @@
 //!
 //! # Features
 //!
-//! - `serde`: Enable serialization and deserialization using the [`serde`](https://docs.rs/serde) crate.
+//! - `serde`: Enable serialization and deserialization of [`Nanoid`] using the [`serde`](https://docs.rs/serde) crate.
 //!
 //! # Comparison with other implementations of Nano ID
 //!
