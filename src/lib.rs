@@ -391,6 +391,60 @@ impl<'de, const N: usize, A: Alphabet> serde::Deserialize<'de> for Nanoid<N, A> 
     }
 }
 
+/// Parse [`Nanoid`]s from strings at compile time.
+///
+/// This macro transforms a constant string into [`Nanoid`] at compile time.
+/// If the provided string is not a valid Nano ID, the program will not compile.
+///
+/// # Arguments
+///
+/// - `$id`: The Nano ID string.
+/// - `$alphabet`: The alphabet used in the Nano ID. The default is [`Base64UrlAlphabet`].
+///
+/// # Examples
+///
+/// ```
+/// use nid::{alphabet::Base62Alphabet, nanoid, Nanoid};
+///
+/// let id1 = nanoid!("F6JA-LPEbPpz71qxDjaId");
+/// const ID1: Nanoid = nanoid!("F6JA-LPEbPpz71qxDjaId");
+///
+/// // With a different length.
+/// let id2 = nanoid!("P2_LONIp4S");
+/// const ID2: Nanoid<10> = nanoid!("P2_LONIp4S");
+///
+/// // With a different alphabet.
+/// let id3 = nanoid!("F6JAzLPEbPpz71qxDjaId", Base62Alphabet);
+/// const ID3: Nanoid<21, Base62Alphabet> = nanoid!("F6JAzLPEbPpz71qxDjaId", Base62Alphabet);
+/// ```
+///
+/// # Compilation errors
+///
+/// If the provided string is not a valid Nano ID, the program will not compile.
+///
+/// ```compile_fail
+/// use nid::nanoid;
+/// let id = nanoid!("abc###"); // Compilation error: the provided string has invalid character
+/// ```
+#[macro_export]
+macro_rules! nanoid {
+    ($id:expr $(, $alphabet:ty)? $(,)?) => {{
+        const ID: $crate::Nanoid<{ $crate::std::primitive::str::as_bytes($id).len() }$(, $alphabet)?> = match $crate::Nanoid::try_from_str($id) {
+            $crate::std::result::Result::Ok(id) => id,
+            $crate::std::result::Result::Err($crate::ParseError::InvalidLength { .. }) => {
+                $crate::std::unreachable!()
+            }
+            $crate::std::result::Result::Err($crate::ParseError::InvalidCharacter(_)) => {
+                $crate::std::panic!("the provided string has invalid character")
+            }
+        };
+        ID
+    }};
+}
+
+#[doc(hidden)]
+pub use std;
+
 #[cfg(test)]
 mod tests {
     use std::collections::HashMap;
@@ -398,7 +452,7 @@ mod tests {
     use pretty_assertions::{assert_eq, assert_ne};
 
     use super::*;
-    use crate::alphabet::{Base58Alphabet, Base62Alphabet};
+    use crate::alphabet::{Base16Alphabet, Base58Alphabet, Base62Alphabet};
 
     #[test]
     fn test_new_unique() {
@@ -694,5 +748,32 @@ mod tests {
         inner::<6, Base64UrlAlphabet>("\"アイ\"");
         inner::<10, Base62Alphabet>("\" \\n \\n \\n \\n \\n\"");
         inner::<12, Base58Alphabet>("\"abcdefghijkl\"");
+    }
+
+    #[test]
+    fn test_nanoid_macro() {
+        {
+            let id = nanoid!("vj-JewhEyrcoWbaLEXTp-");
+            const ID: Nanoid = nanoid!("vj-JewhEyrcoWbaLEXTp-");
+            assert_eq!(id.as_str(), "vj-JewhEyrcoWbaLEXTp-");
+            assert_eq!(ID.as_str(), "vj-JewhEyrcoWbaLEXTp-");
+        }
+
+        {
+            let id = nanoid!("4KC9zU3v_8mLJokZ");
+            const ID: Nanoid<16> = nanoid!("4KC9zU3v_8mLJokZ");
+            assert_eq!(id.as_str(), "4KC9zU3v_8mLJokZ");
+            assert_eq!(ID.as_str(), "4KC9zU3v_8mLJokZ");
+        }
+
+        {
+            let id = nanoid!("5B0AD0A10D", Base16Alphabet);
+            const ID: Nanoid<10, Base16Alphabet> = nanoid!("5B0AD0A10D", Base16Alphabet);
+            assert_eq!(id.as_str(), "5B0AD0A10D");
+            assert_eq!(ID.as_str(), "5B0AD0A10D");
+        }
+
+        nanoid!("vj-JewhEyrcoWbaLEXTp-",);
+        nanoid!("5B0AD0A10D", Base16Alphabet,);
     }
 }
