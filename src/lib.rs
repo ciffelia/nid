@@ -562,55 +562,18 @@ mod tests {
     }
 
     #[test]
-    fn test_display_format() {
+    fn test_convert_to_string() {
         fn inner<const N: usize, A: Alphabet>(s: &str) {
             let id: Nanoid<N, A> = s.parse().unwrap();
+
+            // Test `Display` trait
             assert_eq!(format!("{}", id), s);
-        }
 
-        inner::<21, Base64UrlAlphabet>("ABCDEFGHIJKLMNOPQ123_");
-        inner::<21, Base62Alphabet>("ABCDEFGHIJKLMNOPQ1234");
-        inner::<21, Base58Alphabet>("ABCDEFGHJKLMNPQ123456");
-        inner::<6, Base64UrlAlphabet>("abc12-");
-        inner::<10, Base62Alphabet>("abc1234XYZ");
-        inner::<12, Base58Alphabet>("abc123XYZ123");
-    }
-
-    #[test]
-    fn test_into_string() {
-        fn inner<const N: usize, A: Alphabet>(s: &str) {
-            let id: Nanoid<N, A> = s.parse().unwrap();
+            // Test `From<String>` trait
             assert_eq!(String::from(id), s);
-        }
 
-        inner::<21, Base64UrlAlphabet>("ABCDEFGHIJKLMNOPQ123_");
-        inner::<21, Base62Alphabet>("ABCDEFGHIJKLMNOPQ1234");
-        inner::<21, Base58Alphabet>("ABCDEFGHJKLMNPQ123456");
-        inner::<6, Base64UrlAlphabet>("abc12-");
-        inner::<10, Base62Alphabet>("abc1234XYZ");
-        inner::<12, Base58Alphabet>("abc123XYZ123");
-    }
-
-    #[test]
-    fn test_as_ref_str() {
-        fn inner<const N: usize, A: Alphabet>(s: &str) {
-            let id: Nanoid<N, A> = s.parse().unwrap();
+            // Test `AsRef<str>` trait
             assert_eq!(id.as_ref(), s);
-        }
-
-        inner::<21, Base64UrlAlphabet>("ABCDEFGHIJKLMNOPQ123_");
-        inner::<21, Base62Alphabet>("ABCDEFGHIJKLMNOPQ1234");
-        inner::<21, Base58Alphabet>("ABCDEFGHJKLMNPQ123456");
-        inner::<6, Base64UrlAlphabet>("abc12-");
-        inner::<10, Base62Alphabet>("abc1234XYZ");
-        inner::<12, Base58Alphabet>("abc123XYZ123");
-    }
-
-    #[test]
-    fn test_try_from_string_valid() {
-        fn inner<const N: usize, A: Alphabet>(s: &str) {
-            let id: Nanoid<N, A> = s.to_string().try_into().unwrap();
-            assert_eq!(id.as_str(), s);
         }
 
         inner::<21, Base64UrlAlphabet>("ABCDEFGHIJKLMNOPQ123_");
@@ -624,6 +587,12 @@ mod tests {
     #[test]
     fn test_parse_valid() {
         fn inner<const N: usize, A: Alphabet>(s: &str) {
+            let id: Nanoid<N, A> = Nanoid::try_from_str(s).unwrap();
+            assert_eq!(id.as_str(), s);
+
+            let id: Nanoid<N, A> = s.to_string().try_into().unwrap();
+            assert_eq!(id.as_str(), s);
+
             let id: Nanoid<N, A> = s.parse().unwrap();
             assert_eq!(id.as_str(), s);
         }
@@ -639,6 +608,12 @@ mod tests {
     #[test]
     fn test_parse_invalid_length() {
         fn inner<const N: usize, A: Alphabet>(s: &str, expected: usize, actual: usize) {
+            let result: Result<Nanoid<N, A>, _> = Nanoid::try_from_str(s);
+            assert_eq!(result, Err(ParseError::InvalidLength { expected, actual }));
+
+            let result: Result<Nanoid<N, A>, _> = s.to_string().try_into();
+            assert_eq!(result, Err(ParseError::InvalidLength { expected, actual }));
+
             let result: Result<Nanoid<N, A>, _> = s.parse();
             assert_eq!(result, Err(ParseError::InvalidLength { expected, actual }));
         }
@@ -654,6 +629,12 @@ mod tests {
     #[test]
     fn test_parse_invalid_character() {
         fn inner<const N: usize, A: Alphabet>(s: &str, character: u8) {
+            let result: Result<Nanoid<N, A>, _> = Nanoid::try_from_str(s);
+            assert_eq!(result, Err(ParseError::InvalidCharacter(character)));
+
+            let result: Result<Nanoid<N, A>, _> = s.to_string().try_into();
+            assert_eq!(result, Err(ParseError::InvalidCharacter(character)));
+
             let result: Result<Nanoid<N, A>, _> = s.parse();
             assert_eq!(result, Err(ParseError::InvalidCharacter(character)));
         }
