@@ -54,7 +54,7 @@
 /// # Ok::<(), Box<dyn std::error::Error>>(())
 /// ```
 ///
-/// Note that the alphabet must contain only ASCII characters. If you use an alphabet with non-ASCII characters, the compiler will raise an error.
+/// Note that the alphabet must contain only ASCII characters. If you use an alphabet with non-ASCII characters, the compilation error will occur.
 ///
 /// ```compile_fail
 /// use nid::{alphabet::Alphabet, Nanoid};
@@ -65,7 +65,7 @@
 ///     const SYMBOL_LIST: &'static [u8] = b"abc012\xa0\xa1";
 /// }
 ///
-/// let id: Nanoid<21, CustomAlphabet> = Nanoid::new(); // Compile error: found non-ascii symbol in alphabet
+/// let id: Nanoid<21, CustomAlphabet> = Nanoid::new(); // Compilation error: found non-ascii symbol in alphabet
 /// ```
 pub trait Alphabet {
     /// The symbols that can be used in Nano ID. Symbols are represented as [`u8`] values.
