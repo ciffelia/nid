@@ -30,6 +30,8 @@
 //! # Ok::<(), Box<dyn std::error::Error>>(())
 //! ```
 
+// NOTE: Currently symbols are represented as [`u8`] values. We may change this to [`std::ascii::Char`] when it becomes stable.
+
 /// A set of symbols that can be used in Nano ID. In this crate, only ASCII characters can be used as symbols.
 ///
 /// For the list of available alphabets, see the [`alphabet`](crate::alphabet) module.
@@ -66,9 +68,7 @@
 /// let id: Nanoid<21, CustomAlphabet> = Nanoid::new(); // Compile error: found non-ascii symbol in alphabet
 /// ```
 pub trait Alphabet {
-    /// The symbols that can be used in Nano ID.
-    ///
-    /// Symbols are represented as [`u8`] values. We may change this to [`std::ascii::Char`] when it becomes stable.
+    /// The symbols that can be used in Nano ID. Symbols are represented as [`u8`] values.
     const SYMBOL_LIST: &'static [u8];
 }
 
