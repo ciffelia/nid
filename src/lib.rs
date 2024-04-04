@@ -81,7 +81,7 @@ pub mod alphabet;
 
 use std::{marker::PhantomData, mem::MaybeUninit};
 
-use alphabet::{Alphabet, Base64UrlAlphabet};
+use alphabet::{Alphabet, AlphabetExt, Base64UrlAlphabet};
 
 /// A Nano ID.
 ///
@@ -159,7 +159,7 @@ pub struct Nanoid<const N: usize = 21, A: Alphabet = Base64UrlAlphabet> {
 }
 
 /// An error that can occur when parsing a string into a Nano ID.
-#[derive(Debug, thiserror::Error)]
+#[derive(Debug, Clone, PartialEq, Eq, Hash, thiserror::Error)]
 pub enum ParseError {
     /// The length of the provided value is not equal to the expected length.
     #[error("Invalid length: expected {expected} bytes, but got {actual} bytes")]
@@ -217,11 +217,9 @@ impl<const N: usize, A: Alphabet> Nanoid<N, A> {
         // cf. https://doc.rust-lang.org/std/mem/union.MaybeUninit.html#initializing-an-array-element-by-element
         let mut buf: [MaybeUninit<u8>; N] = unsafe { MaybeUninit::uninit().assume_init() };
 
-        let distr = rand::distributions::Uniform::from(0..A::len());
+        let distr = rand::distributions::Uniform::from(0..A::VALID_SYMBOL_LIST.len());
         for b in &mut buf {
-            let s = A::get(rng.sample(distr));
-            assert!(s.is_ascii(), "the alphabet contains non-ascii characters");
-            b.write(s);
+            b.write(A::VALID_SYMBOL_LIST[rng.sample(distr)]);
         }
 
         // Convert `MaybeUninit<u8>` to `u8`. `MaybeUninit::assume_init` doesn't work due to the limitation of the compiler.
@@ -238,25 +236,43 @@ impl<const N: usize, A: Alphabet> Nanoid<N, A> {
         }
     }
 
-    /// Try to parse a string into a [`Nanoid`].
-    fn try_from_str(s: &str) -> Result<Self, ParseError> {
-        let buf = s
-            .as_bytes()
-            .try_into()
-            .map_err(|_| ParseError::InvalidLength {
+    /// Parse a string into a [`Nanoid`].
+    ///
+    /// # Errors
+    ///
+    /// - If the length of the string is not equal to the expected length, this method returns [`ParseError::InvalidLength`].
+    /// - If the string contains a character that is not in the alphabet, this method returns [`ParseError::InvalidCharacter`].
+    pub const fn try_from_str(s: &str) -> Result<Self, ParseError> {
+        let s = s.as_bytes();
+
+        // This conversion is copied from the `TryFrom` implementation. We can't call `try_from` here because it's not const.
+        // https://github.com/rust-lang/rust/blob/7cf61ebde7b22796c69757901dd346d0fe70bd97/library/core/src/array/mod.rs#L250-L264
+        let buf = if s.len() == N {
+            let ptr = s.as_ptr() as *const [u8; N];
+            // SAFETY: ok because we just checked that the length fits
+            unsafe { *ptr }
+        } else {
+            return Err(ParseError::InvalidLength {
                 expected: N,
                 actual: s.len(),
-            })?;
+            });
+        };
 
         Self::try_from_bytes(buf)
     }
 
-    /// Try to parse a byte array into a [`Nanoid`].
-    fn try_from_bytes(buf: [u8; N]) -> Result<Self, ParseError> {
-        for b in buf {
-            if !b.is_ascii() || !A::contains(b) {
-                return Err(ParseError::InvalidCharacter(b));
+    /// Parse a byte array into a [`Nanoid`].
+    ///
+    /// # Errors
+    ///
+    /// If the byte array contains a character that is not in the alphabet, this method returns [`ParseError::InvalidCharacter`].
+    pub const fn try_from_bytes(buf: [u8; N]) -> Result<Self, ParseError> {
+        let mut i = 0;
+        while i < N {
+            if buf[i] >= A::VALID_SYMBOL_MAP.len() as u8 || !A::VALID_SYMBOL_MAP[buf[i] as usize] {
+                return Err(ParseError::InvalidCharacter(buf[i]));
             }
+            i += 1;
         }
 
         Ok(Nanoid {
@@ -375,6 +391,60 @@ impl<'de, const N: usize, A: Alphabet> serde::Deserialize<'de> for Nanoid<N, A> 
     }
 }
 
+/// Parse [`Nanoid`]s from strings at compile time.
+///
+/// This macro transforms a constant string into [`Nanoid`] at compile time.
+/// If the provided string is not a valid Nano ID, the program will not compile.
+///
+/// # Arguments
+///
+/// - `$id`: The Nano ID string.
+/// - `$alphabet`: The alphabet used in the Nano ID. The default is [`Base64UrlAlphabet`].
+///
+/// # Examples
+///
+/// ```
+/// use nid::{alphabet::Base62Alphabet, nanoid, Nanoid};
+///
+/// let id1 = nanoid!("F6JA-LPEbPpz71qxDjaId");
+/// const ID1: Nanoid = nanoid!("F6JA-LPEbPpz71qxDjaId");
+///
+/// // With a different length.
+/// let id2 = nanoid!("P2_LONIp4S");
+/// const ID2: Nanoid<10> = nanoid!("P2_LONIp4S");
+///
+/// // With a different alphabet.
+/// let id3 = nanoid!("F6JAzLPEbPpz71qxDjaId", Base62Alphabet);
+/// const ID3: Nanoid<21, Base62Alphabet> = nanoid!("F6JAzLPEbPpz71qxDjaId", Base62Alphabet);
+/// ```
+///
+/// # Compilation errors
+///
+/// If the provided string is not a valid Nano ID, the program will not compile.
+///
+/// ```compile_fail
+/// use nid::nanoid;
+/// let id = nanoid!("abc###"); // Compilation error: the provided string has invalid character
+/// ```
+#[macro_export]
+macro_rules! nanoid {
+    ($id:expr $(, $alphabet:ty)? $(,)?) => {{
+        const ID: $crate::Nanoid<{ $crate::std::primitive::str::as_bytes($id).len() }$(, $alphabet)?> = match $crate::Nanoid::try_from_str($id) {
+            $crate::std::result::Result::Ok(id) => id,
+            $crate::std::result::Result::Err($crate::ParseError::InvalidLength { .. }) => {
+                $crate::std::unreachable!()
+            }
+            $crate::std::result::Result::Err($crate::ParseError::InvalidCharacter(_)) => {
+                $crate::std::panic!("the provided string has invalid character")
+            }
+        };
+        ID
+    }};
+}
+
+#[doc(hidden)]
+pub use std;
+
 #[cfg(test)]
 mod tests {
     use std::collections::HashMap;
@@ -382,7 +452,7 @@ mod tests {
     use pretty_assertions::{assert_eq, assert_ne};
 
     use super::*;
-    use crate::alphabet::{Base58Alphabet, Base62Alphabet};
+    use crate::alphabet::{Base16Alphabet, Base58Alphabet, Base62Alphabet};
 
     #[test]
     fn test_new_unique() {
@@ -412,7 +482,7 @@ mod tests {
                 }
             }
 
-            assert_eq!(counts.len(), A::len());
+            assert_eq!(counts.len(), A::VALID_SYMBOL_LIST.len());
 
             let max_count = counts.values().max().unwrap();
             let min_count = counts.values().min().unwrap();
@@ -426,27 +496,6 @@ mod tests {
         inner::<6, Base64UrlAlphabet>(400_000);
         inner::<10, Base62Alphabet>(200_000);
         inner::<12, Base58Alphabet>(200_000);
-    }
-
-    #[test]
-    #[should_panic]
-    fn test_new_invalid_alphabet() {
-        struct InvalidAlphabet;
-        impl Alphabet for InvalidAlphabet {
-            fn len() -> usize {
-                1
-            }
-
-            fn get(index: usize) -> u8 {
-                [b'\xa0'][index]
-            }
-
-            fn contains(symbol: u8) -> bool {
-                symbol == b'\xa0'
-            }
-        }
-
-        let _ = Nanoid::<21, InvalidAlphabet>::new();
     }
 
     #[test]
@@ -567,55 +616,18 @@ mod tests {
     }
 
     #[test]
-    fn test_display_format() {
+    fn test_convert_to_string() {
         fn inner<const N: usize, A: Alphabet>(s: &str) {
             let id: Nanoid<N, A> = s.parse().unwrap();
+
+            // Test `Display` trait
             assert_eq!(format!("{}", id), s);
-        }
 
-        inner::<21, Base64UrlAlphabet>("ABCDEFGHIJKLMNOPQ123_");
-        inner::<21, Base62Alphabet>("ABCDEFGHIJKLMNOPQ1234");
-        inner::<21, Base58Alphabet>("ABCDEFGHJKLMNPQ123456");
-        inner::<6, Base64UrlAlphabet>("abc12-");
-        inner::<10, Base62Alphabet>("abc1234XYZ");
-        inner::<12, Base58Alphabet>("abc123XYZ123");
-    }
-
-    #[test]
-    fn test_into_string() {
-        fn inner<const N: usize, A: Alphabet>(s: &str) {
-            let id: Nanoid<N, A> = s.parse().unwrap();
+            // Test `From<String>` trait
             assert_eq!(String::from(id), s);
-        }
 
-        inner::<21, Base64UrlAlphabet>("ABCDEFGHIJKLMNOPQ123_");
-        inner::<21, Base62Alphabet>("ABCDEFGHIJKLMNOPQ1234");
-        inner::<21, Base58Alphabet>("ABCDEFGHJKLMNPQ123456");
-        inner::<6, Base64UrlAlphabet>("abc12-");
-        inner::<10, Base62Alphabet>("abc1234XYZ");
-        inner::<12, Base58Alphabet>("abc123XYZ123");
-    }
-
-    #[test]
-    fn test_as_ref_str() {
-        fn inner<const N: usize, A: Alphabet>(s: &str) {
-            let id: Nanoid<N, A> = s.parse().unwrap();
+            // Test `AsRef<str>` trait
             assert_eq!(id.as_ref(), s);
-        }
-
-        inner::<21, Base64UrlAlphabet>("ABCDEFGHIJKLMNOPQ123_");
-        inner::<21, Base62Alphabet>("ABCDEFGHIJKLMNOPQ1234");
-        inner::<21, Base58Alphabet>("ABCDEFGHJKLMNPQ123456");
-        inner::<6, Base64UrlAlphabet>("abc12-");
-        inner::<10, Base62Alphabet>("abc1234XYZ");
-        inner::<12, Base58Alphabet>("abc123XYZ123");
-    }
-
-    #[test]
-    fn test_try_from_string_valid() {
-        fn inner<const N: usize, A: Alphabet>(s: &str) {
-            let id: Nanoid<N, A> = s.to_string().try_into().unwrap();
-            assert_eq!(id.as_str(), s);
         }
 
         inner::<21, Base64UrlAlphabet>("ABCDEFGHIJKLMNOPQ123_");
@@ -629,6 +641,12 @@ mod tests {
     #[test]
     fn test_parse_valid() {
         fn inner<const N: usize, A: Alphabet>(s: &str) {
+            let id: Nanoid<N, A> = Nanoid::try_from_str(s).unwrap();
+            assert_eq!(id.as_str(), s);
+
+            let id: Nanoid<N, A> = s.to_string().try_into().unwrap();
+            assert_eq!(id.as_str(), s);
+
             let id: Nanoid<N, A> = s.parse().unwrap();
             assert_eq!(id.as_str(), s);
         }
@@ -643,14 +661,15 @@ mod tests {
 
     #[test]
     fn test_parse_invalid_length() {
-        fn inner<const N: usize, A: Alphabet>(s: &str, e: usize, a: usize) {
+        fn inner<const N: usize, A: Alphabet>(s: &str, expected: usize, actual: usize) {
+            let result: Result<Nanoid<N, A>, _> = Nanoid::try_from_str(s);
+            assert_eq!(result, Err(ParseError::InvalidLength { expected, actual }));
+
+            let result: Result<Nanoid<N, A>, _> = s.to_string().try_into();
+            assert_eq!(result, Err(ParseError::InvalidLength { expected, actual }));
+
             let result: Result<Nanoid<N, A>, _> = s.parse();
-            if let Err(ParseError::InvalidLength { expected, actual }) = result {
-                assert_eq!(expected, e);
-                assert_eq!(actual, a);
-            } else {
-                panic!("unexpected result: {:?}", result);
-            }
+            assert_eq!(result, Err(ParseError::InvalidLength { expected, actual }));
         }
 
         inner::<21, Base64UrlAlphabet>("ABCDEF123!!", 21, 11);
@@ -663,13 +682,15 @@ mod tests {
 
     #[test]
     fn test_parse_invalid_character() {
-        fn inner<const N: usize, A: Alphabet>(s: &str, c: u8) {
+        fn inner<const N: usize, A: Alphabet>(s: &str, character: u8) {
+            let result: Result<Nanoid<N, A>, _> = Nanoid::try_from_str(s);
+            assert_eq!(result, Err(ParseError::InvalidCharacter(character)));
+
+            let result: Result<Nanoid<N, A>, _> = s.to_string().try_into();
+            assert_eq!(result, Err(ParseError::InvalidCharacter(character)));
+
             let result: Result<Nanoid<N, A>, _> = s.parse();
-            if let Err(ParseError::InvalidCharacter(character)) = result {
-                assert_eq!(character, c);
-            } else {
-                panic!("unexpected result: {:?}", result);
-            }
+            assert_eq!(result, Err(ParseError::InvalidCharacter(character)));
         }
 
         inner::<21, Base64UrlAlphabet>("$TQBHLT47zhMMxee2LRSo", b'$');
@@ -727,5 +748,32 @@ mod tests {
         inner::<6, Base64UrlAlphabet>("\"アイ\"");
         inner::<10, Base62Alphabet>("\" \\n \\n \\n \\n \\n\"");
         inner::<12, Base58Alphabet>("\"abcdefghijkl\"");
+    }
+
+    #[test]
+    fn test_nanoid_macro() {
+        {
+            let id = nanoid!("vj-JewhEyrcoWbaLEXTp-");
+            const ID: Nanoid = nanoid!("vj-JewhEyrcoWbaLEXTp-");
+            assert_eq!(id.as_str(), "vj-JewhEyrcoWbaLEXTp-");
+            assert_eq!(ID.as_str(), "vj-JewhEyrcoWbaLEXTp-");
+        }
+
+        {
+            let id = nanoid!("4KC9zU3v_8mLJokZ");
+            const ID: Nanoid<16> = nanoid!("4KC9zU3v_8mLJokZ");
+            assert_eq!(id.as_str(), "4KC9zU3v_8mLJokZ");
+            assert_eq!(ID.as_str(), "4KC9zU3v_8mLJokZ");
+        }
+
+        {
+            let id = nanoid!("5B0AD0A10D", Base16Alphabet);
+            const ID: Nanoid<10, Base16Alphabet> = nanoid!("5B0AD0A10D", Base16Alphabet);
+            assert_eq!(id.as_str(), "5B0AD0A10D");
+            assert_eq!(ID.as_str(), "5B0AD0A10D");
+        }
+
+        nanoid!("vj-JewhEyrcoWbaLEXTp-",);
+        nanoid!("5B0AD0A10D", Base16Alphabet,);
     }
 }
