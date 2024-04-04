@@ -4,6 +4,10 @@
 //!
 //! The default alphabet used in Nano ID is [`Base64UrlAlphabet`], which contains `A-Za-z0-9_-` symbols.
 //!
+//! # Implementing a custom alphabet
+//!
+//! To implement a custom alphabet, you need to create a new type that implements the [`Alphabet`] trait.
+//!
 //! # Examples
 //!
 //! ```rust
@@ -29,6 +33,38 @@
 /// A set of symbols that can be used in Nano ID. In this crate, only ASCII characters can be used as symbols.
 ///
 /// For the list of available alphabets, see the [`alphabet`](crate::alphabet) module.
+///
+/// # Implementing a custom alphabet
+///
+/// To implement a custom alphabet, you need to create a new type that implements the [`Alphabet`] trait.
+///
+/// ```rust
+/// use nid::{alphabet::Alphabet, Nanoid};
+///
+/// struct CustomAlphabet;
+///
+/// impl Alphabet for CustomAlphabet {
+///     const SYMBOL_LIST: &'static [u8] = b"(){}[]<>";
+/// }
+///
+/// let id: Nanoid<21, CustomAlphabet> = Nanoid::new();
+/// let id: Nanoid<21, CustomAlphabet> = "{{)((})>]<)}(>)(<)<){".parse()?;
+/// # Ok::<(), Box<dyn std::error::Error>>(())
+/// ```
+///
+/// Note that the alphabet must contain only ASCII characters. If you use an alphabet with non-ASCII characters, the compiler will raise an error.
+///
+/// ```compile_fail
+/// use nid::{alphabet::Alphabet, Nanoid};
+///
+/// struct CustomAlphabet;
+///
+/// impl Alphabet for CustomAlphabet {
+///     const SYMBOL_LIST: &'static [u8] = b"abc012\xa0\xa1";
+/// }
+///
+/// let id: Nanoid<21, CustomAlphabet> = Nanoid::new(); // Compile error: found non-ascii symbol in alphabet
+/// ```
 pub trait Alphabet {
     /// The symbols that can be used in Nano ID.
     ///
