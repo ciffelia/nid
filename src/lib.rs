@@ -159,7 +159,7 @@ pub struct Nanoid<const N: usize = 21, A: Alphabet = Base64UrlAlphabet> {
 }
 
 /// An error that can occur when parsing a string into a Nano ID.
-#[derive(Debug, thiserror::Error)]
+#[derive(Debug, Clone, PartialEq, Eq, Hash, thiserror::Error)]
 pub enum ParseError {
     /// The length of the provided value is not equal to the expected length.
     #[error("Invalid length: expected {expected} bytes, but got {actual} bytes")]
@@ -638,14 +638,9 @@ mod tests {
 
     #[test]
     fn test_parse_invalid_length() {
-        fn inner<const N: usize, A: Alphabet>(s: &str, e: usize, a: usize) {
+        fn inner<const N: usize, A: Alphabet>(s: &str, expected: usize, actual: usize) {
             let result: Result<Nanoid<N, A>, _> = s.parse();
-            if let Err(ParseError::InvalidLength { expected, actual }) = result {
-                assert_eq!(expected, e);
-                assert_eq!(actual, a);
-            } else {
-                panic!("unexpected result: {:?}", result);
-            }
+            assert_eq!(result, Err(ParseError::InvalidLength { expected, actual }));
         }
 
         inner::<21, Base64UrlAlphabet>("ABCDEF123!!", 21, 11);
@@ -658,13 +653,9 @@ mod tests {
 
     #[test]
     fn test_parse_invalid_character() {
-        fn inner<const N: usize, A: Alphabet>(s: &str, c: u8) {
+        fn inner<const N: usize, A: Alphabet>(s: &str, character: u8) {
             let result: Result<Nanoid<N, A>, _> = s.parse();
-            if let Err(ParseError::InvalidCharacter(character)) = result {
-                assert_eq!(character, c);
-            } else {
-                panic!("unexpected result: {:?}", result);
-            }
+            assert_eq!(result, Err(ParseError::InvalidCharacter(character)));
         }
 
         inner::<21, Base64UrlAlphabet>("$TQBHLT47zhMMxee2LRSo", b'$');
