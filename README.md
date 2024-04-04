@@ -41,7 +41,7 @@ let id: Nanoid = "3hYR3muA_xvjMrrrqFWxF".parse()?;
 let id: Nanoid = "iH26rJ8CpRz-gfIh7TSRu".to_string().try_into()?;
 ```
 
-If you have a constant Nano ID, you can use the [`nanoid`] macro to parse it at compile time.
+If the Nano ID string is constant, you can also use the [`nanoid`] macro to parse it at compile time.
 
 ```rust
 use nid::{nanoid, Nanoid};

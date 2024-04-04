@@ -35,7 +35,7 @@
 //! # Ok::<(), Box<dyn std::error::Error>>(())
 //! ```
 //!
-//! If you have a constant Nano ID, you can use the [`nanoid`] macro to parse it at compile time.
+//! If the Nano ID string is constant, you can also use the [`nanoid`] macro to parse it at compile time.
 //!
 //! ```
 //! use nid::{nanoid, Nanoid};
