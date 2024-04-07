@@ -163,6 +163,7 @@ use alphabet::{Alphabet, AlphabetExt, Base64UrlAlphabet};
 /// let id: Nanoid<9, Base62Alphabet> = "abc123XYZ".parse()?;
 /// # Ok::<(), Box<dyn std::error::Error>>(())
 /// ```
+#[cfg_attr(feature = "zeroize", derive(zeroize::Zeroize))]
 pub struct Nanoid<const N: usize = 21, A: Alphabet = Base64UrlAlphabet> {
     /// The Nano ID string. All characters are ASCII.
     inner: [u8; N],
@@ -760,6 +761,24 @@ mod tests {
         inner::<6, Base64UrlAlphabet>("\"アイ\"");
         inner::<10, Base62Alphabet>("\" \\n \\n \\n \\n \\n\"");
         inner::<12, Base58Alphabet>("\"abcdefghijkl\"");
+    }
+
+    #[cfg(feature = "zeroize")]
+    #[test]
+    fn test_zeroize() {
+        use zeroize::Zeroize;
+
+        fn inner<const N: usize, A: Alphabet>(s: &str) {
+            let mut id: Nanoid<N, A> = s.parse().unwrap();
+            id.zeroize();
+        }
+
+        inner::<21, Base64UrlAlphabet>("ABCDEFGHIJKLMNOPQ123_");
+        inner::<21, Base62Alphabet>("ABCDEFGHIJKLMNOPQ1234");
+        inner::<21, Base58Alphabet>("ABCDEFGHJKLMNPQ123456");
+        inner::<6, Base64UrlAlphabet>("abc12-");
+        inner::<10, Base62Alphabet>("abc1234XYZ");
+        inner::<12, Base58Alphabet>("abc123XYZ123");
     }
 
     #[test]
