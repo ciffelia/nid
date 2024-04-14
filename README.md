@@ -82,7 +82,8 @@ let id: Nanoid<9, Base62Alphabet> = "abc123XYZ".parse()?;
 
 ## Features
 
-- `serde`: Enable serialization and deserialization of [`Nanoid`] using the [`serde`](https://docs.rs/serde) crate.
+- `serde`: Add support for serialization and deserialization of [`Nanoid`] using the [`serde`](https://docs.rs/serde) crate.
+- `zeroize`: Add support for zeroizing the memory of [`Nanoid`] using the [`zeroize`](https://docs.rs/zeroize) crate.
 
 ## Comparison with other implementations of Nano ID
 
