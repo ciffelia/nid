@@ -49,7 +49,7 @@ let id = nanoid!("ClCrhcvy5kviH5ZozARfi");
 const ID: Nanoid = nanoid!("9vZZWqFI_rTou3Mutq1LH");
 ```
 
-The length of the Nano ID is 21 by default, but you can change it by specifying the generic parameter.
+The length of the Nano ID is 21 by default. You can change it by specifying the generic parameter.
 
 ```rust
 use nid::Nanoid;
@@ -82,8 +82,8 @@ let id: Nanoid<9, Base62Alphabet> = "abc123XYZ".parse()?;
 
 ## Features
 
-- `serde`: Add support for serialization and deserialization of [`Nanoid`] using the [`serde`](https://docs.rs/serde) crate.
-- `zeroize`: Add support for zeroizing the memory of [`Nanoid`] using the [`zeroize`](https://docs.rs/zeroize) crate.
+- `serde`: Add support for serialization and deserialization of [`Nanoid`]. Implement [`serde::Serialize`] and [`serde::Deserialize`] for [`Nanoid`].
+- `zeroize`: Add support for zeroizing the memory of [`Nanoid`]. Implement [`zeroize::Zeroize`] for [`Nanoid`].
 
 ## Comparison with other implementations of Nano ID
 
