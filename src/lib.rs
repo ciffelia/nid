@@ -16,7 +16,7 @@
 //!
 //! ```toml
 //! [dependencies]
-//! nid = "2.1.0"
+//! nid = "3.0.0-rc.1"
 //! ```
 //!
 //! When you want a new Nano ID, you can generate one using the [`Nanoid::new`] method.
