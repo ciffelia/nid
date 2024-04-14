@@ -94,11 +94,15 @@ This type provides a safe way to generate and parse Nano IDs.
 This is similar to [`uuid`](https://docs.rs/uuid) crate, which provides [`Uuid`](https://docs.rs/uuid/latest/uuid/struct.Uuid.html) type to represent UUIDs.
 
 [`Nanoid::new`]: https://docs.rs/nid/latest/nid/struct.Nanoid.html#method.new
-[`std::str::FromStr`]: https://doc.rust-lang.org/nightly/core/str/traits/trait.FromStr.html
-[`TryFrom`]: https://doc.rust-lang.org/nightly/core/str/traits/trait.FromStr.html
+[`Nanoid::try_from_str`]: https://docs.rs/nid/latest/nid/struct.Nanoid.html#method.try_from_str
+[`std::str::FromStr`]: https://doc.rust-lang.org/std/str/trait.FromStr.html
+[`TryFrom<String>`]: https://doc.rust-lang.org/std/convert/trait.TryFrom.html
 [`nanoid`]: https://docs.rs/nid/latest/nid/macro.nanoid.html
 [`alphabet`]: https://docs.rs/nid/latest/nid/alphabet/index.html
 [`Nanoid`]: https://docs.rs/nid/latest/nid/struct.Nanoid.html
+[`serde::Serialize`]: https://docs.rs/serde/latest/serde/ser/trait.Serialize.html
+[`serde::Deserialize`]: https://docs.rs/serde/latest/serde/de/trait.Deserialize.html
+[`zeroize::Zeroize`]: https://docs.rs/zeroize/latest/zeroize/trait.Zeroize.html
 
 ## License
 
