@@ -43,7 +43,7 @@
 //! const ID: Nanoid = nanoid!("9vZZWqFI_rTou3Mutq1LH");
 //! ```
 //!
-//! The length of the Nano ID is 21 by default, but you can change it by specifying the generic parameter.
+//! The length of the Nano ID is 21 by default. You can change it by specifying the generic parameter.
 //!
 //! ```
 //! use nid::Nanoid;
@@ -78,8 +78,8 @@
 //!
 //! # Features
 //!
-//! - `serde`: Add support for serialization and deserialization of [`Nanoid`] using the [`serde`](https://docs.rs/serde) crate.
-//! - `zeroize`: Add support for zeroizing the memory of [`Nanoid`] using the [`zeroize`](https://docs.rs/zeroize) crate.
+//! - `serde`: Add support for serialization and deserialization of [`Nanoid`]. Implement [`serde::Serialize`] and [`serde::Deserialize`] for [`Nanoid`].
+//! - `zeroize`: Add support for zeroizing the memory of [`Nanoid`]. Implement [`zeroize::Zeroize`] for [`Nanoid`].
 //!
 //! # Comparison with other implementations of Nano ID
 //!
@@ -138,7 +138,7 @@ use alphabet::{Alphabet, AlphabetExt, Base64UrlAlphabet};
 ///
 /// # Converting to a string
 ///
-/// You can get the string representation of the Nano ID using the [`AsRef`] or [`Display`](std::fmt::Display) trait.
+/// You can get the string representation of the Nano ID using the [`AsRef<str>`] or [`Display`](std::fmt::Display) trait.
 ///
 /// ```
 /// use nid::Nanoid;
