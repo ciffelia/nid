@@ -30,8 +30,12 @@
 //!
 //! ```
 //! use nid::Nanoid;
+//!
+//! // From &str
 //! let id: Nanoid = Nanoid::try_from_str("K8N4Q7MNmeHJ-OHHoVDcz")?;
 //! let id: Nanoid = "3hYR3muA_xvjMrrrqFWxF".parse()?;
+//!
+//! // From String
 //! let id: Nanoid = "iH26rJ8CpRz-gfIh7TSRu".to_string().try_into()?;
 //! # Ok::<(), Box<dyn std::error::Error>>(())
 //! ```
