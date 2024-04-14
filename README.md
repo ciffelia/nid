@@ -23,7 +23,7 @@ Add the following to your `Cargo.toml`:
 
 ```toml
 [dependencies]
-nid = "2.0.0"
+nid = "2.1.0-rc.1"
 ```
 
 When you want a new Nano ID, you can generate one using the [`Nanoid::new`] method.
