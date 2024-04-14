@@ -237,6 +237,7 @@ impl<const N: usize, A: Alphabet> Nanoid<N, A> {
     /// let id: Nanoid = Nanoid::new_with(rand::thread_rng());
     /// ```
     #[must_use]
+    #[inline]
     pub fn new_with(mut rng: impl rand::Rng) -> Self {
         // SAFETY: The `assume_init` is safe because the type we are claiming to have initialized
         // here is a bunch of `MaybeUninit`s, which do not require initialization.
@@ -308,6 +309,7 @@ impl<const N: usize, A: Alphabet> Nanoid<N, A> {
     /// let id: Nanoid = Nanoid::try_from_bytes(b"0tY_GxufiwmAxvmHR7G0R")?;
     /// # Ok::<(), Box<dyn std::error::Error>>(())
     /// ```
+    #[inline]
     pub const fn try_from_bytes(buf: &[u8; N]) -> Result<Self, ParseError> {
         let mut i = 0;
         while i < N {
