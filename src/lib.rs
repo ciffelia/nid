@@ -284,7 +284,7 @@ impl<const N: usize, A: Alphabet> Nanoid<N, A> {
         let buf = if s.len() == N {
             let ptr = s.as_ptr() as *const [u8; N];
             // SAFETY: ok because we just checked that the length fits
-            unsafe { *ptr }
+            unsafe { &*ptr }
         } else {
             return Err(ParseError::InvalidLength {
                 expected: N,
@@ -305,10 +305,10 @@ impl<const N: usize, A: Alphabet> Nanoid<N, A> {
     ///
     /// ```
     /// use nid::Nanoid;
-    /// let id: Nanoid = Nanoid::try_from_bytes(*b"0tY_GxufiwmAxvmHR7G0R")?;
+    /// let id: Nanoid = Nanoid::try_from_bytes(b"0tY_GxufiwmAxvmHR7G0R")?;
     /// # Ok::<(), Box<dyn std::error::Error>>(())
     /// ```
-    pub const fn try_from_bytes(buf: [u8; N]) -> Result<Self, ParseError> {
+    pub const fn try_from_bytes(buf: &[u8; N]) -> Result<Self, ParseError> {
         let mut i = 0;
         while i < N {
             if buf[i] >= A::VALID_SYMBOL_MAP.len() as u8 || !A::VALID_SYMBOL_MAP[buf[i] as usize] {
@@ -318,7 +318,7 @@ impl<const N: usize, A: Alphabet> Nanoid<N, A> {
         }
 
         Ok(Nanoid {
-            inner: buf,
+            inner: *buf,
             _marker: PhantomData,
         })
     }
