@@ -33,10 +33,11 @@ use nid::Nanoid;
 let id: Nanoid = Nanoid::new();
 ```
 
-You can parse a string into a Nano ID using the [`std::str::FromStr`] or [`TryFrom`] trait.
+You can parse a string into a Nano ID using [`Nanoid::try_from_str`], [`std::str::FromStr`] or [`TryFrom<String>`].
 
 ```rust
 use nid::Nanoid;
+let id: Nanoid = Nanoid::try_from_str("K8N4Q7MNmeHJ-OHHoVDcz")?;
 let id: Nanoid = "3hYR3muA_xvjMrrrqFWxF".parse()?;
 let id: Nanoid = "iH26rJ8CpRz-gfIh7TSRu".to_string().try_into()?;
 ```

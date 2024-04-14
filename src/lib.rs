@@ -26,10 +26,11 @@
 //! let id: Nanoid = Nanoid::new();
 //! ```
 //!
-//! You can parse a string into a Nano ID using the [`std::str::FromStr`] or [`TryFrom`] trait.
+//! You can parse a string into a Nano ID using [`Nanoid::try_from_str`], [`std::str::FromStr`] or [`TryFrom<String>`].
 //!
 //! ```
 //! use nid::Nanoid;
+//! let id: Nanoid = Nanoid::try_from_str("K8N4Q7MNmeHJ-OHHoVDcz")?;
 //! let id: Nanoid = "3hYR3muA_xvjMrrrqFWxF".parse()?;
 //! let id: Nanoid = "iH26rJ8CpRz-gfIh7TSRu".to_string().try_into()?;
 //! # Ok::<(), Box<dyn std::error::Error>>(())
@@ -115,10 +116,11 @@ use alphabet::{Alphabet, AlphabetExt, Base64UrlAlphabet};
 ///
 /// # Parsing
 ///
-/// You can parse a string into a Nano ID using the [`std::str::FromStr`] or [`TryFrom`] trait.
+/// You can parse a string into a Nano ID using [`Nanoid::try_from_str`], [`std::str::FromStr`] or [`TryFrom<String>`].
 ///
 /// ```
 /// use nid::Nanoid;
+/// let id: Nanoid = Nanoid::try_from_str("K8N4Q7MNmeHJ-OHHoVDcz")?;
 /// let id: Nanoid = "3hYR3muA_xvjMrrrqFWxF".parse()?;
 /// let id: Nanoid = "iH26rJ8CpRz-gfIh7TSRu".to_string().try_into()?;
 /// # Ok::<(), Box<dyn std::error::Error>>(())
@@ -193,18 +195,18 @@ pub enum ParseError {
 impl<const N: usize, A: Alphabet> Nanoid<N, A> {
     /// Generate a new Nano ID using random number generator seeded by the system.
     ///
+    /// # Panics
+    ///
+    /// The function will panic if the random number generator is not able to generate random numbers.
+    /// This function also panics if the provided [`Alphabet`] produces non-ascii characters, but this
+    /// never happens unless the alphabet is implemented incorrectly.
+    ///
     /// # Examples
     ///
     /// ```
     /// use nid::Nanoid;
     /// let id: Nanoid = Nanoid::new();
     /// ```
-    ///
-    /// # Panics
-    ///
-    /// The function will panic if the random number generator is not able to generate random numbers.
-    /// This function also panics if the provided [`Alphabet`] produces non-ascii characters, but this
-    /// never happens unless the alphabet is implemented incorrectly.
     #[allow(clippy::new_without_default)]
     #[must_use]
     pub fn new() -> Self {
@@ -213,18 +215,18 @@ impl<const N: usize, A: Alphabet> Nanoid<N, A> {
 
     /// Generate a new Nano ID using the provided random number generator.
     ///
+    /// # Panics
+    ///
+    /// The function will panic if the provided random number generator is not able to generate random numbers.
+    /// This function also panics if the provided [`Alphabet`] produces non-ascii characters, but this
+    /// never happens unless the alphabet is implemented incorrectly.
+    ///
     /// # Examples
     ///
     /// ```
     /// use nid::Nanoid;
     /// let id: Nanoid = Nanoid::new_with(rand::thread_rng());
     /// ```
-    ///
-    /// # Panics
-    ///
-    /// The function will panic if the provided random number generator is not able to generate random numbers.
-    /// This function also panics if the provided [`Alphabet`] produces non-ascii characters, but this
-    /// never happens unless the alphabet is implemented incorrectly.
     #[must_use]
     pub fn new_with(mut rng: impl rand::Rng) -> Self {
         // SAFETY: The `assume_init` is safe because the type we are claiming to have initialized
@@ -257,6 +259,14 @@ impl<const N: usize, A: Alphabet> Nanoid<N, A> {
     ///
     /// - If the length of the string is not equal to the expected length, this method returns [`ParseError::InvalidLength`].
     /// - If the string contains a character that is not in the alphabet, this method returns [`ParseError::InvalidCharacter`].
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use nid::Nanoid;
+    /// let id: Nanoid = Nanoid::try_from_str("r9p_QLd_9CD63JqQaGQ9I")?;
+    /// # Ok::<(), Box<dyn std::error::Error>>(())
+    /// ```
     pub const fn try_from_str(s: &str) -> Result<Self, ParseError> {
         let s = s.as_bytes();
 
@@ -281,6 +291,14 @@ impl<const N: usize, A: Alphabet> Nanoid<N, A> {
     /// # Errors
     ///
     /// If the byte array contains a character that is not in the alphabet, this method returns [`ParseError::InvalidCharacter`].
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use nid::Nanoid;
+    /// let id: Nanoid = Nanoid::try_from_bytes(*b"0tY_GxufiwmAxvmHR7G0R")?;
+    /// # Ok::<(), Box<dyn std::error::Error>>(())
+    /// ```
     pub const fn try_from_bytes(buf: [u8; N]) -> Result<Self, ParseError> {
         let mut i = 0;
         while i < N {
