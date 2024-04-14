@@ -120,8 +120,12 @@ use alphabet::{Alphabet, AlphabetExt, Base64UrlAlphabet};
 ///
 /// ```
 /// use nid::Nanoid;
+///
+/// // From &str
 /// let id: Nanoid = Nanoid::try_from_str("K8N4Q7MNmeHJ-OHHoVDcz")?;
 /// let id: Nanoid = "3hYR3muA_xvjMrrrqFWxF".parse()?;
+///
+/// // From String
 /// let id: Nanoid = "iH26rJ8CpRz-gfIh7TSRu".to_string().try_into()?;
 /// # Ok::<(), Box<dyn std::error::Error>>(())
 /// ```
@@ -140,12 +144,17 @@ use alphabet::{Alphabet, AlphabetExt, Base64UrlAlphabet};
 ///
 /// # Converting to a string
 ///
-/// You can get the string representation of the Nano ID using the [`AsRef<str>`] or [`Display`](std::fmt::Display) trait.
+/// You can get the string representation of the Nano ID using [`Nanoid::as_str`], [`AsRef<str>`] or [`Display`](std::fmt::Display).
 ///
 /// ```
 /// use nid::Nanoid;
 /// let id: Nanoid = "Z9ifKfmBL7j69naN7hthu".parse()?;
+///
+/// // Convert to &str
+/// assert_eq!(id.as_str(), "Z9ifKfmBL7j69naN7hthu");
 /// assert_eq!(id.as_ref(), "Z9ifKfmBL7j69naN7hthu");
+///
+/// // Convert to String
 /// assert_eq!(id.to_string(), "Z9ifKfmBL7j69naN7hthu");
 /// # Ok::<(), Box<dyn std::error::Error>>(())
 /// ```
@@ -315,9 +324,18 @@ impl<const N: usize, A: Alphabet> Nanoid<N, A> {
     }
 
     /// Get the string representation of the [`Nanoid`].
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use nid::Nanoid;
+    /// let id: Nanoid = "vsB2sq2PfhCdU6WCXk37s".parse()?;
+    /// assert_eq!(id.as_str(), "vsB2sq2PfhCdU6WCXk37s");
+    /// # Ok::<(), Box<dyn std::error::Error>>(())
+    /// ```
     #[must_use]
     #[inline]
-    const fn as_str(&self) -> &str {
+    pub const fn as_str(&self) -> &str {
         // SAFETY: all characters are ASCII.
         unsafe { std::str::from_utf8_unchecked(&self.inner) }
     }
@@ -656,10 +674,13 @@ mod tests {
         fn inner<const N: usize, A: Alphabet>(s: &str) {
             let id: Nanoid<N, A> = s.parse().unwrap();
 
+            // Test `as_str` method
+            assert_eq!(id.as_str(), s);
+
             // Test `Display` trait
             assert_eq!(format!("{}", id), s);
 
-            // Test `From<String>` trait
+            // Test `From<Nanoid>` trait
             assert_eq!(String::from(id), s);
 
             // Test `AsRef<str>` trait
