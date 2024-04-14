@@ -297,6 +297,8 @@ impl<const N: usize, A: Alphabet> Nanoid<N, A> {
     }
 
     /// Get the string representation of the [`Nanoid`].
+    #[must_use]
+    #[inline]
     const fn as_str(&self) -> &str {
         // SAFETY: all characters are ASCII.
         unsafe { std::str::from_utf8_unchecked(&self.inner) }
@@ -340,6 +342,7 @@ impl<const N: usize, A: Alphabet> PartialOrd for Nanoid<N, A> {
 
 // `Ord` cannot be derived as well.
 impl<const N: usize, A: Alphabet> Ord for Nanoid<N, A> {
+    #[inline]
     fn cmp(&self, other: &Self) -> std::cmp::Ordering {
         self.inner.cmp(&other.inner)
     }
