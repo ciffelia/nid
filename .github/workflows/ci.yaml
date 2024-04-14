@@ -13,6 +13,7 @@ permissions:
 env:
   RUST_TOOLCHAIN: '1.77.1'
   RUST_TOOLCHAIN_RUSTFMT: nightly
+  RUST_TOOLCHAIN_RUSTDOC: nightly
   CARGO_TERM_COLOR: always
 
 jobs:
@@ -130,11 +131,11 @@ jobs:
       - name: Setup Rust
         run: |
           rustup set profile minimal
-          rustup toolchain install "$RUST_TOOLCHAIN"
-          rustup override set "$RUST_TOOLCHAIN"
+          rustup toolchain install "$RUST_TOOLCHAIN_RUSTDOC"
+          rustup override set "$RUST_TOOLCHAIN_RUSTDOC"
 
       - name: cargo doc
-        run: cargo doc --no-deps --document-private-items --all-features
+        run: cargo rustdoc --all-features -- --document-private-items --cfg doc_auto_cfg
 
       - name: Upload documentation
         uses: actions/upload-artifact@v4

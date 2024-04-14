@@ -88,6 +88,7 @@
 //! This type provides a safe way to generate and parse Nano IDs.
 //! This is similar to [`uuid`](https://docs.rs/uuid) crate, which provides [`Uuid`](https://docs.rs/uuid/latest/uuid/struct.Uuid.html) type to represent UUIDs.
 
+#![cfg_attr(doc_auto_cfg, feature(doc_auto_cfg))]
 #![deny(missing_debug_implementations, missing_docs)]
 
 pub mod alphabet;
