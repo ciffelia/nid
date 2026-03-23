@@ -81,6 +81,7 @@
 //!
 //! - `serde`: Add support for serialization and deserialization of [`Nanoid`]. Implement [`serde::Serialize`] and [`serde::Deserialize`] for [`Nanoid`].
 //! - `zeroize`: Add support for zeroizing the memory of [`Nanoid`]. Implement [`zeroize::Zeroize`] for [`Nanoid`].
+//! - `packed`: Add support for packed byte representation of Nano IDs. See [`packed`] module.
 //!
 //! # Comparison with other implementations of Nano ID
 //!
@@ -93,6 +94,11 @@
 #![deny(missing_debug_implementations, missing_docs)]
 
 pub mod alphabet;
+#[cfg(feature = "packed")]
+pub mod packed;
+
+#[cfg(feature = "packed")]
+pub use packed::PackedNanoid;
 
 use std::{marker::PhantomData, mem::MaybeUninit};
 
