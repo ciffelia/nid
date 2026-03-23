@@ -9,7 +9,7 @@
 //! use nid::{Nanoid, alphabet::Base64UrlAlphabet, packed::PackedNanoid};
 //!
 //! let id: Nanoid<21, Base64UrlAlphabet> = Nanoid::new();
-//! let packed: PackedNanoid<21, Base64UrlAlphabet, 16> = PackedNanoid::pack(&id)?;
+//! let packed: PackedNanoid<21, 16, Base64UrlAlphabet> = PackedNanoid::pack(&id)?;
 //! let unpacked: Nanoid<21, Base64UrlAlphabet> = packed.unpack()?;
 //! assert_eq!(id, unpacked);
 //! # Ok::<(), nid::packed::PackError>(())
@@ -98,8 +98,8 @@ impl<A: Alphabet + AlphabetExt> AlphabetPackExt for A {
 /// # Type Parameters
 ///
 /// - `N`: Number of characters (same as the corresponding [`Nanoid`])
-/// - `A`: Alphabet type that implements [`AlphabetPackExt`]
 /// - `B`: Number of packed bytes (`ceil(N * A::PACK_BITS / 8)`)
+/// - `A`: Alphabet type that implements [`AlphabetPackExt`]
 ///
 /// # Example
 ///
@@ -108,7 +108,7 @@ impl<A: Alphabet + AlphabetExt> AlphabetPackExt for A {
 ///
 /// // A 21-character Base64Url Nano ID packs into 16 bytes
 /// let id: Nanoid<21, Base64UrlAlphabet> = "qjH-6uGrFy0QgNJtUh0_c".parse()?;
-/// let packed: PackedNanoid<21, Base64UrlAlphabet, 16> = PackedNanoid::pack(&id)?;
+/// let packed: PackedNanoid<21, 16, Base64UrlAlphabet> = PackedNanoid::pack(&id)?;
 ///
 /// // Get the raw packed bytes
 /// let bytes: &[u8; 16] = packed.as_bytes();
@@ -119,12 +119,12 @@ impl<A: Alphabet + AlphabetExt> AlphabetPackExt for A {
 /// # Ok::<(), Box<dyn std::error::Error>>(())
 /// ```
 #[cfg_attr(feature = "zeroize", derive(zeroize::Zeroize))]
-pub struct PackedNanoid<const N: usize, A: AlphabetPackExt, const B: usize> {
+pub struct PackedNanoid<const N: usize, const B: usize, A: AlphabetPackExt> {
     inner: [u8; B],
     _marker: PhantomData<fn() -> A>,
 }
 
-impl<const N: usize, A: AlphabetPackExt, const B: usize> PackedNanoid<N, A, B> {
+impl<const N: usize, const B: usize, A: AlphabetPackExt> PackedNanoid<N, B, A> {
     /// Pack a [`Nanoid`] into a [`PackedNanoid`].
     ///
     /// # Errors
@@ -137,7 +137,7 @@ impl<const N: usize, A: AlphabetPackExt, const B: usize> PackedNanoid<N, A, B> {
     /// use nid::{Nanoid, alphabet::Base64UrlAlphabet, packed::PackedNanoid};
     ///
     /// let id: Nanoid<21, Base64UrlAlphabet> = Nanoid::new();
-    /// let packed: PackedNanoid<21, Base64UrlAlphabet, 16> = PackedNanoid::pack(&id)?;
+    /// let packed: PackedNanoid<21, 16, Base64UrlAlphabet> = PackedNanoid::pack(&id)?;
     /// # Ok::<(), nid::packed::PackError>(())
     /// ```
     pub fn pack(nanoid: &Nanoid<N, A>) -> Result<Self, PackError> {
@@ -162,7 +162,7 @@ impl<const N: usize, A: AlphabetPackExt, const B: usize> PackedNanoid<N, A, B> {
     /// use nid::{Nanoid, alphabet::Base64UrlAlphabet, packed::PackedNanoid};
     ///
     /// let id: Nanoid<21, Base64UrlAlphabet> = Nanoid::new();
-    /// let packed: PackedNanoid<21, Base64UrlAlphabet, 16> = PackedNanoid::pack(&id)?;
+    /// let packed: PackedNanoid<21, 16, Base64UrlAlphabet> = PackedNanoid::pack(&id)?;
     /// let unpacked: Nanoid<21, Base64UrlAlphabet> = packed.unpack()?;
     /// assert_eq!(id, unpacked);
     /// # Ok::<(), nid::packed::PackError>(())
@@ -186,7 +186,7 @@ impl<const N: usize, A: AlphabetPackExt, const B: usize> PackedNanoid<N, A, B> {
     /// use nid::{Nanoid, alphabet::Base64UrlAlphabet, packed::PackedNanoid};
     ///
     /// let id: Nanoid<21, Base64UrlAlphabet> = Nanoid::new();
-    /// let packed: PackedNanoid<21, Base64UrlAlphabet, 16> = PackedNanoid::pack(&id)?;
+    /// let packed: PackedNanoid<21, 16, Base64UrlAlphabet> = PackedNanoid::pack(&id)?;
     /// let bytes: &[u8; 16] = packed.as_bytes();
     /// # Ok::<(), nid::packed::PackError>(())
     /// ```
@@ -271,8 +271,8 @@ impl<const N: usize, A: AlphabetPackExt, const B: usize> PackedNanoid<N, A, B> {
 }
 
 #[cfg(feature = "rkyv")]
-impl<const N: usize, A: Alphabet, const B: usize> rkyv::Archive
-    for PackedNanoid<N, A, B>
+impl<const N: usize, const B: usize, A: Alphabet> rkyv::Archive
+    for PackedNanoid<N, B, A>
 {
     type Archived = [u8; B];
     type Resolver = [(); B];
@@ -283,8 +283,8 @@ impl<const N: usize, A: Alphabet, const B: usize> rkyv::Archive
 }
 
 #[cfg(feature = "rkyv")]
-impl<const N: usize, A: Alphabet, const B: usize, S>
-    rkyv::Serialize<S> for PackedNanoid<N, A, B>
+impl<const N: usize, const B: usize, A: Alphabet, S>
+    rkyv::Serialize<S> for PackedNanoid<N, B, A>
 where S: rkyv::rancor::Fallible + ?Sized
 {
     fn serialize(&self, serializer: &mut S) -> Result<Self::Resolver, S::Error> {
@@ -295,15 +295,15 @@ where S: rkyv::rancor::Fallible + ?Sized
 #[cfg(feature = "rkyv")]
 impl<
         const N: usize,
-        A: Alphabet,
         const B: usize,
+        A: Alphabet,
         D: rkyv::rancor::Fallible + ?Sized,
-    > rkyv::Deserialize<PackedNanoid<N, A, B>, D> for [u8; B]
+    > rkyv::Deserialize<PackedNanoid<N, B, A>, D> for [u8; B]
 {
     fn deserialize(
         &self,
         _: &mut D,
-    ) -> Result<PackedNanoid<N, A, B>, D::Error> {
+    ) -> Result<PackedNanoid<N, B, A>, D::Error> {
         Ok(PackedNanoid {
             inner: *self,
             _marker: PhantomData,
@@ -311,48 +311,48 @@ impl<
     }
 }
 
-impl<const N: usize, A: AlphabetPackExt, const B: usize> Copy for PackedNanoid<N, A, B> {}
+impl<const N: usize, const B: usize, A: AlphabetPackExt> Copy for PackedNanoid<N, B, A> {}
 
-impl<const N: usize, A: AlphabetPackExt, const B: usize> Clone for PackedNanoid<N, A, B> {
+impl<const N: usize, const B: usize, A: AlphabetPackExt> Clone for PackedNanoid<N, B, A> {
     fn clone(&self) -> Self {
         *self
     }
 }
 
-impl<const N: usize, A: AlphabetPackExt, const B: usize> PartialEq for PackedNanoid<N, A, B> {
+impl<const N: usize, const B: usize, A: AlphabetPackExt> PartialEq for PackedNanoid<N, B, A> {
     fn eq(&self, other: &Self) -> bool {
         self.inner == other.inner
     }
 }
 
-impl<const N: usize, A: AlphabetPackExt, const B: usize> Eq for PackedNanoid<N, A, B> {}
+impl<const N: usize, const B: usize, A: AlphabetPackExt> Eq for PackedNanoid<N, B, A> {}
 
-impl<const N: usize, A: AlphabetPackExt, const B: usize> std::hash::Hash for PackedNanoid<N, A, B> {
+impl<const N: usize, const B: usize, A: AlphabetPackExt> std::hash::Hash for PackedNanoid<N, B, A> {
     fn hash<H: std::hash::Hasher>(&self, state: &mut H) {
         self.inner.hash(state);
     }
 }
 
-impl<const N: usize, A: AlphabetPackExt, const B: usize> PartialOrd for PackedNanoid<N, A, B> {
+impl<const N: usize, const B: usize, A: AlphabetPackExt> PartialOrd for PackedNanoid<N, B, A> {
     fn partial_cmp(&self, other: &Self) -> Option<std::cmp::Ordering> {
         Some(self.cmp(other))
     }
 }
 
-impl<const N: usize, A: AlphabetPackExt, const B: usize> Ord for PackedNanoid<N, A, B> {
+impl<const N: usize, const B: usize, A: AlphabetPackExt> Ord for PackedNanoid<N, B, A> {
     #[inline]
     fn cmp(&self, other: &Self) -> std::cmp::Ordering {
         self.inner.cmp(&other.inner)
     }
 }
 
-impl<const N: usize, A: AlphabetPackExt, const B: usize> std::fmt::Debug for PackedNanoid<N, A, B> {
+impl<const N: usize, const B: usize, A: AlphabetPackExt> std::fmt::Debug for PackedNanoid<N, B, A> {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         f.debug_tuple("PackedNanoid").field(&self.inner).finish()
     }
 }
 
-impl<const N: usize, A: AlphabetPackExt, const B: usize> AsRef<[u8; B]> for PackedNanoid<N, A, B> {
+impl<const N: usize, const B: usize, A: AlphabetPackExt> AsRef<[u8; B]> for PackedNanoid<N, B, A> {
     fn as_ref(&self) -> &[u8; B] {
         &self.inner
     }
@@ -379,10 +379,10 @@ macro_rules! packed_nanoid_type {
     ($n:expr, $alphabet:ty) => {
         $crate::PackedNanoid<
             $n,
-            $alphabet,
             {
                 ($n * <$alphabet as $crate::packed::AlphabetPackExt>::PACK_BITS).div_ceil(8)
             },
+            $alphabet,
         >
     };
 }
@@ -411,28 +411,28 @@ mod tests {
     fn test_roundtrip_base64url() {
         for _ in 0..100 {
             let id: Nanoid<21, Base64UrlAlphabet> = Nanoid::new();
-            let packed: PackedNanoid<21, Base64UrlAlphabet, 16> = PackedNanoid::pack(&id).unwrap();
+            let packed: PackedNanoid<21, 16, Base64UrlAlphabet> = PackedNanoid::pack(&id).unwrap();
             let unpacked = packed.unpack().unwrap();
             assert_eq!(id, unpacked);
         }
 
         for _ in 0..100 {
             let id: Nanoid<10, Base64UrlAlphabet> = Nanoid::new();
-            let packed: PackedNanoid<10, Base64UrlAlphabet, 8> = PackedNanoid::pack(&id).unwrap();
+            let packed: PackedNanoid<10, 8, Base64UrlAlphabet> = PackedNanoid::pack(&id).unwrap();
             let unpacked = packed.unpack().unwrap();
             assert_eq!(id, unpacked);
         }
 
         for _ in 0..100 {
             let id: Nanoid<8, Base64UrlAlphabet> = Nanoid::new();
-            let packed: PackedNanoid<8, Base64UrlAlphabet, 6> = PackedNanoid::pack(&id).unwrap();
+            let packed: PackedNanoid<8, 6, Base64UrlAlphabet> = PackedNanoid::pack(&id).unwrap();
             let unpacked = packed.unpack().unwrap();
             assert_eq!(id, unpacked);
         }
 
         for _ in 0..100 {
             let id: Nanoid<4, Base64UrlAlphabet> = Nanoid::new();
-            let packed: PackedNanoid<4, Base64UrlAlphabet, 3> = PackedNanoid::pack(&id).unwrap();
+            let packed: PackedNanoid<4, 3, Base64UrlAlphabet> = PackedNanoid::pack(&id).unwrap();
             let unpacked = packed.unpack().unwrap();
             assert_eq!(id, unpacked);
         }
@@ -442,21 +442,21 @@ mod tests {
     fn test_roundtrip_base32() {
         for _ in 0..100 {
             let id: Nanoid<21, Base32Alphabet> = Nanoid::new();
-            let packed: PackedNanoid<21, Base32Alphabet, 14> = PackedNanoid::pack(&id).unwrap();
+            let packed: PackedNanoid<21, 14, Base32Alphabet> = PackedNanoid::pack(&id).unwrap();
             let unpacked = packed.unpack().unwrap();
             assert_eq!(id, unpacked);
         }
 
         for _ in 0..100 {
             let id: Nanoid<10, Base32Alphabet> = Nanoid::new();
-            let packed: PackedNanoid<10, Base32Alphabet, 7> = PackedNanoid::pack(&id).unwrap();
+            let packed: PackedNanoid<10, 7, Base32Alphabet> = PackedNanoid::pack(&id).unwrap();
             let unpacked = packed.unpack().unwrap();
             assert_eq!(id, unpacked);
         }
 
         for _ in 0..100 {
             let id: Nanoid<8, Base32Alphabet> = Nanoid::new();
-            let packed: PackedNanoid<8, Base32Alphabet, 5> = PackedNanoid::pack(&id).unwrap();
+            let packed: PackedNanoid<8, 5, Base32Alphabet> = PackedNanoid::pack(&id).unwrap();
             let unpacked = packed.unpack().unwrap();
             assert_eq!(id, unpacked);
         }
@@ -466,21 +466,21 @@ mod tests {
     fn test_roundtrip_base16() {
         for _ in 0..100 {
             let id: Nanoid<21, Base16Alphabet> = Nanoid::new();
-            let packed: PackedNanoid<21, Base16Alphabet, 11> = PackedNanoid::pack(&id).unwrap();
+            let packed: PackedNanoid<21, 11, Base16Alphabet> = PackedNanoid::pack(&id).unwrap();
             let unpacked = packed.unpack().unwrap();
             assert_eq!(id, unpacked);
         }
 
         for _ in 0..100 {
             let id: Nanoid<10, Base16Alphabet> = Nanoid::new();
-            let packed: PackedNanoid<10, Base16Alphabet, 5> = PackedNanoid::pack(&id).unwrap();
+            let packed: PackedNanoid<10, 5, Base16Alphabet> = PackedNanoid::pack(&id).unwrap();
             let unpacked = packed.unpack().unwrap();
             assert_eq!(id, unpacked);
         }
 
         for _ in 0..100 {
             let id: Nanoid<8, Base16Alphabet> = Nanoid::new();
-            let packed: PackedNanoid<8, Base16Alphabet, 4> = PackedNanoid::pack(&id).unwrap();
+            let packed: PackedNanoid<8, 4, Base16Alphabet> = PackedNanoid::pack(&id).unwrap();
             let unpacked = packed.unpack().unwrap();
             assert_eq!(id, unpacked);
         }
@@ -489,23 +489,23 @@ mod tests {
     #[test]
     fn test_packed_size_reduction() {
         let id: Nanoid<21, Base64UrlAlphabet> = Nanoid::new();
-        let packed: PackedNanoid<21, Base64UrlAlphabet, 16> = PackedNanoid::pack(&id).unwrap();
+        let packed: PackedNanoid<21, 16, Base64UrlAlphabet> = PackedNanoid::pack(&id).unwrap();
         assert_eq!(packed.as_bytes().len(), 16);
 
         let id: Nanoid<21, Base32Alphabet> = Nanoid::new();
-        let packed: PackedNanoid<21, Base32Alphabet, 14> = PackedNanoid::pack(&id).unwrap();
+        let packed: PackedNanoid<21, 14, Base32Alphabet> = PackedNanoid::pack(&id).unwrap();
         assert_eq!(packed.as_bytes().len(), 14);
 
         let id: Nanoid<21, Base16Alphabet> = Nanoid::new();
-        let packed: PackedNanoid<21, Base16Alphabet, 11> = PackedNanoid::pack(&id).unwrap();
+        let packed: PackedNanoid<21, 11, Base16Alphabet> = PackedNanoid::pack(&id).unwrap();
         assert_eq!(packed.as_bytes().len(), 11);
     }
 
     #[test]
     fn test_eq() {
         let id: Nanoid<21, Base64UrlAlphabet> = "ABCDEFGHIJKLMNOPQ123_".parse().unwrap();
-        let packed1: PackedNanoid<21, Base64UrlAlphabet, 16> = PackedNanoid::pack(&id).unwrap();
-        let packed2: PackedNanoid<21, Base64UrlAlphabet, 16> = PackedNanoid::pack(&id).unwrap();
+        let packed1: PackedNanoid<21, 16, Base64UrlAlphabet> = PackedNanoid::pack(&id).unwrap();
+        let packed2: PackedNanoid<21, 16, Base64UrlAlphabet> = PackedNanoid::pack(&id).unwrap();
         assert_eq!(packed1, packed2);
     }
 
@@ -513,8 +513,8 @@ mod tests {
     fn test_ne() {
         let id1: Nanoid<21, Base64UrlAlphabet> = Nanoid::new();
         let id2: Nanoid<21, Base64UrlAlphabet> = Nanoid::new();
-        let packed1: PackedNanoid<21, Base64UrlAlphabet, 16> = PackedNanoid::pack(&id1).unwrap();
-        let packed2: PackedNanoid<21, Base64UrlAlphabet, 16> = PackedNanoid::pack(&id2).unwrap();
+        let packed1: PackedNanoid<21, 16, Base64UrlAlphabet> = PackedNanoid::pack(&id1).unwrap();
+        let packed2: PackedNanoid<21, 16, Base64UrlAlphabet> = PackedNanoid::pack(&id2).unwrap();
         assert_ne!(packed1, packed2);
     }
 
@@ -536,7 +536,7 @@ mod tests {
         // '3' = index 9 = 0b1001
         // Packed MSB-first: 01100111 10001001 = 0x67, 0x89
         let id: Nanoid<4, Base16Alphabet> = "0123".parse().unwrap();
-        let packed: PackedNanoid<4, Base16Alphabet, 2> = PackedNanoid::pack(&id).unwrap();
+        let packed: PackedNanoid<4, 2, Base16Alphabet> = PackedNanoid::pack(&id).unwrap();
         assert_eq!(packed.as_bytes(), &[0x67, 0x89]);
 
         let unpacked = packed.unpack().unwrap();
@@ -587,7 +587,7 @@ mod tests {
         #[test]
         fn test_rkyv_archive_bytes_match_packed() {
             let id: Nanoid<21, Base64UrlAlphabet> = Nanoid::new();
-            let packed: PackedNanoid<21, Base64UrlAlphabet, 16> = PackedNanoid::pack(&id).unwrap();
+            let packed: PackedNanoid<21, 16, Base64UrlAlphabet> = PackedNanoid::pack(&id).unwrap();
 
             let archived = rkyv::to_bytes::<Error>(&packed).unwrap();
             let archived_ref: &[u8; 16] = unsafe { &*archived.as_ptr().cast() };
@@ -598,11 +598,11 @@ mod tests {
         #[test]
         fn test_rkyv_roundtrip_base64url() {
             let id: Nanoid<21, Base64UrlAlphabet> = Nanoid::new();
-            let packed: PackedNanoid<21, Base64UrlAlphabet, 16> = PackedNanoid::pack(&id).unwrap();
+            let packed: PackedNanoid<21, 16, Base64UrlAlphabet> = PackedNanoid::pack(&id).unwrap();
 
             let bytes = rkyv::to_bytes::<Error>(&packed).unwrap();
-            let deserialized: PackedNanoid<21, Base64UrlAlphabet, 16> =
-                rkyv::from_bytes::<PackedNanoid<21, Base64UrlAlphabet, 16>, Error>(&bytes).unwrap();
+            let deserialized: PackedNanoid<21, 16, Base64UrlAlphabet> =
+                rkyv::from_bytes::<PackedNanoid<21, 16, Base64UrlAlphabet>, Error>(&bytes).unwrap();
 
             assert_eq!(packed, deserialized);
             assert_eq!(id, deserialized.unpack().unwrap());
@@ -611,11 +611,11 @@ mod tests {
         #[test]
         fn test_rkyv_roundtrip_base32() {
             let id: Nanoid<21, Base32Alphabet> = Nanoid::new();
-            let packed: PackedNanoid<21, Base32Alphabet, 14> = PackedNanoid::pack(&id).unwrap();
+            let packed: PackedNanoid<21, 14, Base32Alphabet> = PackedNanoid::pack(&id).unwrap();
 
             let bytes = rkyv::to_bytes::<Error>(&packed).unwrap();
-            let deserialized: PackedNanoid<21, Base32Alphabet, 14> =
-                rkyv::from_bytes::<PackedNanoid<21, Base32Alphabet, 14>, Error>(&bytes).unwrap();
+            let deserialized: PackedNanoid<21, 14, Base32Alphabet> =
+                rkyv::from_bytes::<PackedNanoid<21, 14, Base32Alphabet>, Error>(&bytes).unwrap();
 
             assert_eq!(packed, deserialized);
             assert_eq!(id, deserialized.unpack().unwrap());
@@ -624,11 +624,11 @@ mod tests {
         #[test]
         fn test_rkyv_roundtrip_base16() {
             let id: Nanoid<21, Base16Alphabet> = Nanoid::new();
-            let packed: PackedNanoid<21, Base16Alphabet, 11> = PackedNanoid::pack(&id).unwrap();
+            let packed: PackedNanoid<21, 11, Base16Alphabet> = PackedNanoid::pack(&id).unwrap();
 
             let bytes = rkyv::to_bytes::<Error>(&packed).unwrap();
-            let deserialized: PackedNanoid<21, Base16Alphabet, 11> =
-                rkyv::from_bytes::<PackedNanoid<21, Base16Alphabet, 11>, Error>(&bytes).unwrap();
+            let deserialized: PackedNanoid<21, 11, Base16Alphabet> =
+                rkyv::from_bytes::<PackedNanoid<21, 11, Base16Alphabet>, Error>(&bytes).unwrap();
 
             assert_eq!(packed, deserialized);
             assert_eq!(id, deserialized.unpack().unwrap());
@@ -638,12 +638,12 @@ mod tests {
         fn test_rkyv_roundtrip_different_sizes() {
             for _ in 0..10 {
                 let id: Nanoid<10, Base64UrlAlphabet> = Nanoid::new();
-                let packed: PackedNanoid<10, Base64UrlAlphabet, 8> =
+                let packed: PackedNanoid<10, 8, Base64UrlAlphabet> =
                     PackedNanoid::pack(&id).unwrap();
 
                 let bytes = rkyv::to_bytes::<Error>(&packed).unwrap();
-                let deserialized: PackedNanoid<10, Base64UrlAlphabet, 8> =
-                    rkyv::from_bytes::<PackedNanoid<10, Base64UrlAlphabet, 8>, Error>(
+                let deserialized: PackedNanoid<10, 8, Base64UrlAlphabet> =
+                    rkyv::from_bytes::<PackedNanoid<10, 8, Base64UrlAlphabet>, Error>(
                         &bytes,
                     )
                     .unwrap();
@@ -656,7 +656,7 @@ mod tests {
         #[test]
         fn test_rkyv_archive_size_equals_packed_size() {
             let id: Nanoid<21, Base64UrlAlphabet> = Nanoid::new();
-            let packed: PackedNanoid<21, Base64UrlAlphabet, 16> = PackedNanoid::pack(&id).unwrap();
+            let packed: PackedNanoid<21, 16, Base64UrlAlphabet> = PackedNanoid::pack(&id).unwrap();
 
             let bytes = rkyv::to_bytes::<Error>(&packed).unwrap();
             assert_eq!(bytes.len(), 16);
@@ -665,15 +665,15 @@ mod tests {
         #[test]
         fn test_rkyv_known_value() {
             let id: Nanoid<4, Base16Alphabet> = "0123".parse().unwrap();
-            let packed: PackedNanoid<4, Base16Alphabet, 2> = PackedNanoid::pack(&id).unwrap();
+            let packed: PackedNanoid<4, 2, Base16Alphabet> = PackedNanoid::pack(&id).unwrap();
 
             assert_eq!(packed.as_bytes(), &[0x67, 0x89]);
 
             let archived = rkyv::to_bytes::<Error>(&packed).unwrap();
             assert_eq!(archived.as_slice(), &[0x67, 0x89]);
 
-            let deserialized: PackedNanoid<4, Base16Alphabet, 2> =
-                rkyv::from_bytes::<PackedNanoid<4, Base16Alphabet, 2>, Error>(&archived).unwrap();
+            let deserialized: PackedNanoid<4, 2, Base16Alphabet> =
+                rkyv::from_bytes::<PackedNanoid<4, 2, Base16Alphabet>, Error>(&archived).unwrap();
             assert_eq!(packed, deserialized);
             assert_eq!(id, deserialized.unpack().unwrap());
         }
