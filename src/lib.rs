@@ -90,7 +90,7 @@
 //! This type provides a safe way to generate and parse Nano IDs.
 //! This is similar to [`uuid`](https://docs.rs/uuid) crate, which provides [`Uuid`](https://docs.rs/uuid/latest/uuid/struct.Uuid.html) type to represent UUIDs.
 
-#![cfg_attr(doc_auto_cfg, feature(doc_auto_cfg))]
+#![cfg_attr(doc_auto_cfg, feature(doc_cfg))]
 #![deny(missing_debug_implementations, missing_docs)]
 
 pub mod alphabet;
@@ -342,6 +342,38 @@ impl<const N: usize, A: Alphabet> Nanoid<N, A> {
     pub const fn as_str(&self) -> &str {
         // SAFETY: all characters are ASCII.
         unsafe { std::str::from_utf8_unchecked(&self.inner) }
+    }
+}
+
+#[cfg(feature = "rkyv")]
+impl<const N: usize, A: Alphabet> rkyv::Archive for Nanoid<N, A> {
+    type Archived = [u8; N];
+    type Resolver = [(); N];
+
+    fn resolve(&self, _: Self::Resolver, out: rkyv::Place<Self::Archived>) {
+        out.write(self.inner);
+    }
+}
+
+#[cfg(feature = "rkyv")]
+impl<const N: usize, A: Alphabet, S> rkyv::Serialize<S> for Nanoid<N, A>
+where
+    S: rkyv::rancor::Fallible + ?Sized,
+{
+    fn serialize(&self, serializer: &mut S) -> Result<Self::Resolver, S::Error> {
+        self.inner.serialize(serializer)
+    }
+}
+
+#[cfg(feature = "rkyv")]
+impl<const N: usize, A: Alphabet, D: rkyv::rancor::Fallible + ?Sized>
+    rkyv::Deserialize<Nanoid<N, A>, D> for [u8; N]
+{
+    fn deserialize(&self, _: &mut D) -> Result<Nanoid<N, A>, D::Error> {
+        Ok(Nanoid {
+            inner: *self,
+            _marker: PhantomData,
+        })
     }
 }
 

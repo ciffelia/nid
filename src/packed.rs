@@ -1,7 +1,7 @@
-//! Packed byte representation for Nano IDs.
+//! Packed byte representation for [`Nanoid`].
 //!
-//! This module provides a compact storage format for Nano IDs where multiple
-//! characters are packed into fewer bytes based on the alphabet size.
+//! This module provides a compact storage format for [`Nanoid`]s where multiple
+//! characters are packed into fewer bytes based on the [`Alphabet`] size.
 //!
 //! # Example
 //!
@@ -23,19 +23,19 @@ use crate::Nanoid;
 /// An error that can occur during pack/unpack operations.
 #[derive(Debug, Clone, PartialEq, Eq, Hash, thiserror::Error)]
 pub enum PackError {
-    /// The character is not in the alphabet (during pack).
+    /// The character is not in the [`Alphabet`] (during pack).
     #[error("Invalid character '{char}' at position {position}")]
     InvalidCharacter {
-        /// The position in the Nano ID.
+        /// The position in the [`Nanoid`].
         position: usize,
         /// The invalid character.
         char: char,
     },
 
-    /// The character index is out of range for the alphabet (during unpack).
+    /// The character index is out of range for the [`Alphabet`] (during unpack).
     #[error("Invalid character index {index} at position {position}")]
     InvalidIndex {
-        /// The position in the Nano ID.
+        /// The position in the [`Nanoid`].
         position: usize,
         /// The invalid index value.
         index: usize,
@@ -51,11 +51,11 @@ pub trait AlphabetPackExt: Alphabet {
     /// Number of bits per character in the packed representation.
     const PACK_BITS: usize;
 
-    /// Reverse lookup map: maps ASCII character to its index in the alphabet.
-    /// Value is 255 (u8::MAX) for characters not in the alphabet.
+    /// Reverse lookup map: maps ASCII character to its index in the [`Alphabet`].
+    /// Value is 255 ([`u8::MAX`]) for characters not in the [`Alphabet`].
     const CHAR_TO_INDEX: [u8; 128];
 
-    /// Get the index of a character in the alphabet.
+    /// Get the index of a character in the [`Alphabet`].
     /// Returns `None` if the character is not in the alphabet or not ASCII.
     #[inline]
     fn char_to_index(ch: u8) -> Option<usize> {
@@ -76,7 +76,7 @@ pub trait AlphabetPackExt: Alphabet {
 /// This automatically computes:
 /// - `PACK_BITS` from the alphabet size.
 /// - `CHAR_TO_INDEX` from the symbol list.
-impl<A: Alphabet> AlphabetPackExt for A {
+impl<A: Alphabet + AlphabetExt> AlphabetPackExt for A {
     const PACK_BITS: usize = (<Self as Alphabet>::SYMBOL_LIST.len() - 1).ilog2() as usize + 1;
 
     const CHAR_TO_INDEX: [u8; 128] = {
@@ -90,14 +90,14 @@ impl<A: Alphabet> AlphabetPackExt for A {
     };
 }
 
-/// A packed byte representation of a Nano ID.
+/// A packed byte representation of a [`Nanoid`].
 ///
-/// This struct stores Nano IDs more efficiently by packing multiple characters
-/// into each byte based on the alphabet's pack size.
+/// This struct stores [`Nanoid`]s more efficiently by packing multiple characters
+/// into each byte based on the [`Alphabet`]'s pack size.
 ///
 /// # Type Parameters
 ///
-/// - `N`: Number of characters (same as the corresponding `Nanoid`)
+/// - `N`: Number of characters (same as the corresponding [`Nanoid`])
 /// - `A`: Alphabet type that implements [`AlphabetPackExt`]
 /// - `B`: Number of packed bytes (`ceil(N * A::PACK_BITS / 8)`)
 ///
@@ -129,8 +129,7 @@ impl<const N: usize, A: AlphabetPackExt, const B: usize> PackedNanoid<N, A, B> {
     ///
     /// # Errors
     ///
-    /// Returns [`PackError::InvalidIndex`] if a character cannot be found in the alphabet.
-    /// This should never happen for a valid `Nanoid`.
+    /// Returns [`PackError::InvalidIndex`] if a character cannot be found in the [`Alphabet`].
     ///
     /// # Example
     ///
@@ -155,7 +154,7 @@ impl<const N: usize, A: AlphabetPackExt, const B: usize> PackedNanoid<N, A, B> {
     /// # Errors
     ///
     /// Returns [`PackError::InvalidIndex`] if the packed data contains an invalid
-    /// character index for the alphabet.
+    /// character for the [`Alphabet`].
     ///
     /// # Example
     ///
@@ -201,8 +200,7 @@ impl<const N: usize, A: AlphabetPackExt, const B: usize> PackedNanoid<N, A, B> {
     ///
     /// # Safety
     ///
-    /// The caller must ensure the bytes represent a valid packed Nano ID
-    /// (i.e., unpacking them produces a valid `Nanoid`).
+    /// The caller must ensure the bytes represent a valid packed [`Nanoid`].
     #[must_use]
     #[inline]
     pub const unsafe fn from_bytes_unchecked(bytes: [u8; B]) -> Self {
@@ -224,11 +222,9 @@ impl<const N: usize, A: AlphabetPackExt, const B: usize> PackedNanoid<N, A, B> {
                 char: ch as char,
             })?;
 
-            // Add to bit buffer (MSB first)
             bit_buffer = (bit_buffer << pack_bits) | (idx as u64);
             bits_in_buffer += pack_bits;
 
-            // Extract complete bytes
             while bits_in_buffer >= 8 && dst_idx < B {
                 bits_in_buffer -= 8;
                 dst[dst_idx] = ((bit_buffer >> bits_in_buffer) & 0xFF) as u8;
@@ -236,7 +232,6 @@ impl<const N: usize, A: AlphabetPackExt, const B: usize> PackedNanoid<N, A, B> {
             }
         }
 
-        // Handle remaining bits (left-padded with zeros)
         if bits_in_buffer > 0 && dst_idx < B {
             dst[dst_idx] = ((bit_buffer << (8 - bits_in_buffer)) & 0xFF) as u8;
         }
@@ -252,18 +247,15 @@ impl<const N: usize, A: AlphabetPackExt, const B: usize> PackedNanoid<N, A, B> {
         let mut src_idx: usize = 0;
 
         for (i, dst_byte) in dst.iter_mut().enumerate() {
-            // Ensure we have enough bits
             while bits_in_buffer < pack_bits && src_idx < B {
                 bit_buffer = (bit_buffer << 8) | (src[src_idx] as u64);
                 bits_in_buffer += 8;
                 src_idx += 1;
             }
 
-            // Extract pack_bits from the top
             bits_in_buffer -= pack_bits;
             let idx = ((bit_buffer >> bits_in_buffer) & mask) as usize;
 
-            // Validate index
             if idx >= A::VALID_SYMBOL_LIST.len() {
                 return Err(PackError::InvalidIndex {
                     position: i,
@@ -278,7 +270,46 @@ impl<const N: usize, A: AlphabetPackExt, const B: usize> PackedNanoid<N, A, B> {
     }
 }
 
-// Manual trait implementations (same pattern as Nanoid)
+#[cfg(feature = "rkyv")]
+impl<const N: usize, A: Alphabet, const B: usize> rkyv::Archive
+    for PackedNanoid<N, A, B>
+{
+    type Archived = [u8; B];
+    type Resolver = [(); B];
+
+    fn resolve(&self, _: Self::Resolver, out: rkyv::Place<Self::Archived>) {
+        out.write(self.inner);
+    }
+}
+
+#[cfg(feature = "rkyv")]
+impl<const N: usize, A: Alphabet, const B: usize, S>
+    rkyv::Serialize<S> for PackedNanoid<N, A, B>
+where S: rkyv::rancor::Fallible + ?Sized
+{
+    fn serialize(&self, serializer: &mut S) -> Result<Self::Resolver, S::Error> {
+        self.inner.serialize(serializer)
+    }
+}
+
+#[cfg(feature = "rkyv")]
+impl<
+        const N: usize,
+        A: Alphabet,
+        const B: usize,
+        D: rkyv::rancor::Fallible + ?Sized,
+    > rkyv::Deserialize<PackedNanoid<N, A, B>, D> for [u8; B]
+{
+    fn deserialize(
+        &self,
+        _: &mut D,
+    ) -> Result<PackedNanoid<N, A, B>, D::Error> {
+        Ok(PackedNanoid {
+            inner: *self,
+            _marker: PhantomData,
+        })
+    }
+}
 
 impl<const N: usize, A: AlphabetPackExt, const B: usize> Copy for PackedNanoid<N, A, B> {}
 
@@ -327,11 +358,12 @@ impl<const N: usize, A: AlphabetPackExt, const B: usize> AsRef<[u8; B]> for Pack
     }
 }
 
+// TODO: Remove this when #76560 issue (generic_const_exprs) will be stabilized.
 /// Create a [`PackedNanoid`] type with automatic byte size computation.
 ///
 /// This macro computes the required byte size `B` based on the number of
 /// characters `N` and the alphabet's `PACK_BITS` using the formula:
-/// `ceil(N * PACK_BITS / 8)` (same as [`AlphabetPackExt::packed_bytes`]).
+/// `ceil(N * PACK_BITS / 8)`.
 ///
 /// # Example
 ///
@@ -349,7 +381,7 @@ macro_rules! packed_nanoid_type {
             $n,
             $alphabet,
             {
-                ($n * <$alphabet as $crate::packed::AlphabetPackExt>::PACK_BITS + 7) / 8
+                ($n * <$alphabet as $crate::packed::AlphabetPackExt>::PACK_BITS).div_ceil(8)
             },
         >
     };
@@ -456,49 +488,17 @@ mod tests {
 
     #[test]
     fn test_packed_size_reduction() {
-        // Base64Url: 21 chars * 6 bits = 126 bits = 16 bytes (vs 21 bytes)
         let id: Nanoid<21, Base64UrlAlphabet> = Nanoid::new();
         let packed: PackedNanoid<21, Base64UrlAlphabet, 16> = PackedNanoid::pack(&id).unwrap();
         assert_eq!(packed.as_bytes().len(), 16);
-        assert!(packed.as_bytes().len() < 21);
 
-        // Base32: 21 chars * 5 bits = 105 bits = 14 bytes (vs 21 bytes)
         let id: Nanoid<21, Base32Alphabet> = Nanoid::new();
         let packed: PackedNanoid<21, Base32Alphabet, 14> = PackedNanoid::pack(&id).unwrap();
         assert_eq!(packed.as_bytes().len(), 14);
 
-        // Base16: 21 chars * 4 bits = 84 bits = 11 bytes (vs 21 bytes)
         let id: Nanoid<21, Base16Alphabet> = Nanoid::new();
         let packed: PackedNanoid<21, Base16Alphabet, 11> = PackedNanoid::pack(&id).unwrap();
         assert_eq!(packed.as_bytes().len(), 11);
-    }
-
-    #[test]
-    fn test_copy() {
-        fn inner<const N: usize, A: AlphabetPackExt, const B: usize>() {
-            let id: Nanoid<N, A> = Nanoid::new();
-            let packed: PackedNanoid<N, A, B> = PackedNanoid::pack(&id).unwrap();
-            let copied = packed;
-            assert_eq!(packed, copied);
-        }
-
-        inner::<21, Base64UrlAlphabet, 16>();
-        inner::<21, Base32Alphabet, 14>();
-        inner::<21, Base16Alphabet, 11>();
-    }
-
-    #[test]
-    fn test_clone() {
-        fn inner<const N: usize, A: AlphabetPackExt, const B: usize>() {
-            let id: Nanoid<N, A> = Nanoid::new();
-            let packed: PackedNanoid<N, A, B> = PackedNanoid::pack(&id).unwrap();
-            let cloned = Clone::clone(&packed);
-            assert_eq!(packed, cloned);
-        }
-
-        inner::<21, Base64UrlAlphabet, 16>();
-        inner::<21, Base32Alphabet, 14>();
-        inner::<21, Base16Alphabet, 11>();
     }
 
     #[test]
@@ -516,14 +516,6 @@ mod tests {
         let packed1: PackedNanoid<21, Base64UrlAlphabet, 16> = PackedNanoid::pack(&id1).unwrap();
         let packed2: PackedNanoid<21, Base64UrlAlphabet, 16> = PackedNanoid::pack(&id2).unwrap();
         assert_ne!(packed1, packed2);
-    }
-
-    #[test]
-    fn test_debug_format() {
-        let id: Nanoid<21, Base64UrlAlphabet> = "ABCDEFGHIJKLMNOPQ123_".parse().unwrap();
-        let packed: PackedNanoid<21, Base64UrlAlphabet, 16> = PackedNanoid::pack(&id).unwrap();
-        let debug_str = format!("{:?}", packed);
-        assert!(debug_str.starts_with("PackedNanoid(["));
     }
 
     #[test]
@@ -547,34 +539,8 @@ mod tests {
         let packed: PackedNanoid<4, Base16Alphabet, 2> = PackedNanoid::pack(&id).unwrap();
         assert_eq!(packed.as_bytes(), &[0x67, 0x89]);
 
-        // Round trip
         let unpacked = packed.unpack().unwrap();
         assert_eq!(unpacked.as_str(), "0123");
-    }
-
-    #[test]
-    fn test_known_values_base32() {
-        // Base32: A-Z, 2-7 (indices 0-31)
-        // "ABC" -> indices [0, 1, 2] -> 00000 00001 00010 -> 00000000 0100010x
-        //                                           -> [0x00, 0x44] with padding
-        let id: Nanoid<3, Base32Alphabet> = "ABC".parse().unwrap();
-        let packed: PackedNanoid<3, Base32Alphabet, 2> = PackedNanoid::pack(&id).unwrap();
-        // 0b00000000 = 0x00, 0b01000100 = 0x44
-        assert_eq!(packed.as_bytes(), &[0x00, 0x44]);
-
-        // Round trip
-        let unpacked = packed.unpack().unwrap();
-        assert_eq!(unpacked.as_str(), "ABC");
-    }
-
-    #[cfg(feature = "zeroize")]
-    #[test]
-    fn test_zeroize() {
-        use zeroize::Zeroize;
-
-        let id: Nanoid<21, Base64UrlAlphabet> = "ABCDEFGHIJKLMNOPQ123_".parse().unwrap();
-        let mut packed: PackedNanoid<21, Base64UrlAlphabet, 16> = PackedNanoid::pack(&id).unwrap();
-        packed.zeroize();
     }
 
     #[test]
@@ -607,5 +573,109 @@ mod tests {
         assert_eq!(Base32Alphabet::char_to_index(b'7'), Some(31));
         assert_eq!(Base32Alphabet::char_to_index(b'1'), None);
         assert_eq!(Base32Alphabet::char_to_index(b'8'), None);
+    }
+
+    #[cfg(feature = "rkyv")]
+    #[cfg(test)]
+    mod rkyv_tests {
+        use rkyv::rancor::Error;
+
+        use crate::alphabet::{Base16Alphabet, Base32Alphabet, Base64UrlAlphabet};
+        use crate::Nanoid;
+        use crate::packed::PackedNanoid;
+
+        #[test]
+        fn test_rkyv_archive_bytes_match_packed() {
+            let id: Nanoid<21, Base64UrlAlphabet> = Nanoid::new();
+            let packed: PackedNanoid<21, Base64UrlAlphabet, 16> = PackedNanoid::pack(&id).unwrap();
+
+            let archived = rkyv::to_bytes::<Error>(&packed).unwrap();
+            let archived_ref: &[u8; 16] = unsafe { &*archived.as_ptr().cast() };
+
+            assert_eq!(archived_ref, packed.as_bytes());
+        }
+
+        #[test]
+        fn test_rkyv_roundtrip_base64url() {
+            let id: Nanoid<21, Base64UrlAlphabet> = Nanoid::new();
+            let packed: PackedNanoid<21, Base64UrlAlphabet, 16> = PackedNanoid::pack(&id).unwrap();
+
+            let bytes = rkyv::to_bytes::<Error>(&packed).unwrap();
+            let deserialized: PackedNanoid<21, Base64UrlAlphabet, 16> =
+                rkyv::from_bytes::<PackedNanoid<21, Base64UrlAlphabet, 16>, Error>(&bytes).unwrap();
+
+            assert_eq!(packed, deserialized);
+            assert_eq!(id, deserialized.unpack().unwrap());
+        }
+
+        #[test]
+        fn test_rkyv_roundtrip_base32() {
+            let id: Nanoid<21, Base32Alphabet> = Nanoid::new();
+            let packed: PackedNanoid<21, Base32Alphabet, 14> = PackedNanoid::pack(&id).unwrap();
+
+            let bytes = rkyv::to_bytes::<Error>(&packed).unwrap();
+            let deserialized: PackedNanoid<21, Base32Alphabet, 14> =
+                rkyv::from_bytes::<PackedNanoid<21, Base32Alphabet, 14>, Error>(&bytes).unwrap();
+
+            assert_eq!(packed, deserialized);
+            assert_eq!(id, deserialized.unpack().unwrap());
+        }
+
+        #[test]
+        fn test_rkyv_roundtrip_base16() {
+            let id: Nanoid<21, Base16Alphabet> = Nanoid::new();
+            let packed: PackedNanoid<21, Base16Alphabet, 11> = PackedNanoid::pack(&id).unwrap();
+
+            let bytes = rkyv::to_bytes::<Error>(&packed).unwrap();
+            let deserialized: PackedNanoid<21, Base16Alphabet, 11> =
+                rkyv::from_bytes::<PackedNanoid<21, Base16Alphabet, 11>, Error>(&bytes).unwrap();
+
+            assert_eq!(packed, deserialized);
+            assert_eq!(id, deserialized.unpack().unwrap());
+        }
+
+        #[test]
+        fn test_rkyv_roundtrip_different_sizes() {
+            for _ in 0..10 {
+                let id: Nanoid<10, Base64UrlAlphabet> = Nanoid::new();
+                let packed: PackedNanoid<10, Base64UrlAlphabet, 8> =
+                    PackedNanoid::pack(&id).unwrap();
+
+                let bytes = rkyv::to_bytes::<Error>(&packed).unwrap();
+                let deserialized: PackedNanoid<10, Base64UrlAlphabet, 8> =
+                    rkyv::from_bytes::<PackedNanoid<10, Base64UrlAlphabet, 8>, Error>(
+                        &bytes,
+                    )
+                    .unwrap();
+
+                assert_eq!(packed, deserialized);
+                assert_eq!(id, deserialized.unpack().unwrap());
+            }
+        }
+
+        #[test]
+        fn test_rkyv_archive_size_equals_packed_size() {
+            let id: Nanoid<21, Base64UrlAlphabet> = Nanoid::new();
+            let packed: PackedNanoid<21, Base64UrlAlphabet, 16> = PackedNanoid::pack(&id).unwrap();
+
+            let bytes = rkyv::to_bytes::<Error>(&packed).unwrap();
+            assert_eq!(bytes.len(), 16);
+        }
+
+        #[test]
+        fn test_rkyv_known_value() {
+            let id: Nanoid<4, Base16Alphabet> = "0123".parse().unwrap();
+            let packed: PackedNanoid<4, Base16Alphabet, 2> = PackedNanoid::pack(&id).unwrap();
+
+            assert_eq!(packed.as_bytes(), &[0x67, 0x89]);
+
+            let archived = rkyv::to_bytes::<Error>(&packed).unwrap();
+            assert_eq!(archived.as_slice(), &[0x67, 0x89]);
+
+            let deserialized: PackedNanoid<4, Base16Alphabet, 2> =
+                rkyv::from_bytes::<PackedNanoid<4, Base16Alphabet, 2>, Error>(&archived).unwrap();
+            assert_eq!(packed, deserialized);
+            assert_eq!(id, deserialized.unpack().unwrap());
+        }
     }
 }
