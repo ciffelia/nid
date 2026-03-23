@@ -271,9 +271,7 @@ impl<const N: usize, const B: usize, A: AlphabetPackExt> PackedNanoid<N, B, A> {
 }
 
 #[cfg(feature = "rkyv")]
-impl<const N: usize, const B: usize, A: Alphabet> rkyv::Archive
-    for PackedNanoid<N, B, A>
-{
+impl<const N: usize, const B: usize, A: Alphabet> rkyv::Archive for PackedNanoid<N, B, A> {
     type Archived = [u8; B];
     type Resolver = [(); B];
 
@@ -283,9 +281,9 @@ impl<const N: usize, const B: usize, A: Alphabet> rkyv::Archive
 }
 
 #[cfg(feature = "rkyv")]
-impl<const N: usize, const B: usize, A: Alphabet, S>
-    rkyv::Serialize<S> for PackedNanoid<N, B, A>
-where S: rkyv::rancor::Fallible + ?Sized
+impl<const N: usize, const B: usize, A: Alphabet, S> rkyv::Serialize<S> for PackedNanoid<N, B, A>
+where
+    S: rkyv::rancor::Fallible + ?Sized,
 {
     fn serialize(&self, serializer: &mut S) -> Result<Self::Resolver, S::Error> {
         self.inner.serialize(serializer)
@@ -293,21 +291,23 @@ where S: rkyv::rancor::Fallible + ?Sized
 }
 
 #[cfg(feature = "rkyv")]
-impl<
-        const N: usize,
-        const B: usize,
-        A: Alphabet,
-        D: rkyv::rancor::Fallible + ?Sized,
-    > rkyv::Deserialize<PackedNanoid<N, B, A>, D> for [u8; B]
+impl<const N: usize, const B: usize, A: Alphabet, D: rkyv::rancor::Fallible + ?Sized>
+    rkyv::Deserialize<PackedNanoid<N, B, A>, D> for [u8; B]
 {
-    fn deserialize(
-        &self,
-        _: &mut D,
-    ) -> Result<PackedNanoid<N, B, A>, D::Error> {
+    fn deserialize(&self, _: &mut D) -> Result<PackedNanoid<N, B, A>, D::Error> {
         Ok(PackedNanoid {
             inner: *self,
             _marker: PhantomData,
         })
+    }
+}
+
+impl<const N: usize, const B: usize, A: AlphabetPackExt> Default for PackedNanoid<N, B, A> {
+    fn default() -> Self {
+        Self {
+            inner: [0u8; B],
+            _marker: PhantomData,
+        }
     }
 }
 
@@ -581,8 +581,8 @@ mod tests {
         use rkyv::rancor::Error;
 
         use crate::alphabet::{Base16Alphabet, Base32Alphabet, Base64UrlAlphabet};
-        use crate::Nanoid;
         use crate::packed::PackedNanoid;
+        use crate::Nanoid;
 
         #[test]
         fn test_rkyv_archive_bytes_match_packed() {
@@ -643,10 +643,8 @@ mod tests {
 
                 let bytes = rkyv::to_bytes::<Error>(&packed).unwrap();
                 let deserialized: PackedNanoid<10, 8, Base64UrlAlphabet> =
-                    rkyv::from_bytes::<PackedNanoid<10, 8, Base64UrlAlphabet>, Error>(
-                        &bytes,
-                    )
-                    .unwrap();
+                    rkyv::from_bytes::<PackedNanoid<10, 8, Base64UrlAlphabet>, Error>(&bytes)
+                        .unwrap();
 
                 assert_eq!(packed, deserialized);
                 assert_eq!(id, deserialized.unpack().unwrap());
