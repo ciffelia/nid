@@ -142,6 +142,7 @@ jobs:
         with:
           name: documentation
           path: target/doc
+          if-no-files-found: error
 
   lockfile:
     runs-on: ubuntu-24.04
