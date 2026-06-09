@@ -97,6 +97,7 @@ pub mod alphabet;
 use std::{marker::PhantomData, mem::MaybeUninit};
 
 use alphabet::{Alphabet, AlphabetExt, Base64UrlAlphabet};
+use rand::RngExt;
 
 /// A Nano ID.
 ///
