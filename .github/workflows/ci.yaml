@@ -11,7 +11,6 @@ permissions:
   contents: read
 
 env:
-  RUST_TOOLCHAIN: "1.96.0"
   CARGO_TERM_COLOR: always
 
 jobs:
@@ -37,12 +36,6 @@ jobs:
       - uses: actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10 # v6.0.3
         with:
           persist-credentials: false
-
-      - name: Setup Rust
-        run: |
-          rustup set profile minimal
-          rustup toolchain install "$RUST_TOOLCHAIN"
-          rustup override set "$RUST_TOOLCHAIN"
 
       - uses: Swatinem/rust-cache@c19371144df3bb44fab255c43d04cbc2ab54d1c4 # v2.9.1
 
@@ -85,12 +78,6 @@ jobs:
         with:
           persist-credentials: false
 
-      - name: Setup Rust
-        run: |
-          rustup set profile minimal
-          rustup toolchain install "$RUST_TOOLCHAIN" --component clippy
-          rustup override set "$RUST_TOOLCHAIN"
-
       - uses: Swatinem/rust-cache@c19371144df3bb44fab255c43d04cbc2ab54d1c4 # v2.9.1
 
       - name: cargo clippy
@@ -102,12 +89,6 @@ jobs:
       - uses: actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10 # v6.0.3
         with:
           persist-credentials: false
-
-      - name: Setup Rust
-        run: |
-          rustup set profile minimal
-          rustup toolchain install "$RUST_TOOLCHAIN"
-          rustup override set "$RUST_TOOLCHAIN"
 
       - uses: Swatinem/rust-cache@c19371144df3bb44fab255c43d04cbc2ab54d1c4 # v2.9.1
 
@@ -163,12 +144,6 @@ jobs:
         with:
           persist-credentials: false
 
-      - name: Setup Rust
-        run: |
-          rustup set profile minimal
-          rustup toolchain install "$RUST_TOOLCHAIN"
-          rustup override set "$RUST_TOOLCHAIN"
-
       - name: Check if Cargo.lock is up-to-date
         run: cargo tree --depth 1 --no-dedupe --all-features --locked
 
@@ -206,12 +181,6 @@ jobs:
       - uses: actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10 # v6.0.3
         with:
           persist-credentials: false
-
-      - name: Setup Rust
-        run: |
-          rustup set profile minimal
-          rustup toolchain install "$RUST_TOOLCHAIN"
-          rustup override set "$RUST_TOOLCHAIN"
 
       - run: cargo publish
         env:
