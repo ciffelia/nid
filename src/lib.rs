@@ -468,18 +468,19 @@ impl<'de, const N: usize, A: Alphabet> serde::Deserialize<'de> for Nanoid<N, A> 
 /// ```
 #[macro_export]
 macro_rules! nanoid {
-    ($id:expr $(, $alphabet:ty)? $(,)?) => {{
-        const ID: $crate::Nanoid<{ $crate::std::primitive::str::as_bytes($id).len() }$(, $alphabet)?> = match $crate::Nanoid::try_from_str($id) {
-            $crate::std::result::Result::Ok(id) => id,
-            $crate::std::result::Result::Err($crate::ParseError::InvalidLength { .. }) => {
-                $crate::std::unreachable!()
+    ($id:expr $(, $alphabet:ty)? $(,)?) => {
+        const {
+            match $crate::Nanoid::<{ $crate::std::primitive::str::as_bytes($id).len() }$(, $alphabet)?>::try_from_str($id) {
+                $crate::std::result::Result::Ok(id) => id,
+                $crate::std::result::Result::Err($crate::ParseError::InvalidLength { .. }) => {
+                    $crate::std::unreachable!()
+                }
+                $crate::std::result::Result::Err($crate::ParseError::InvalidCharacter(_)) => {
+                    $crate::std::panic!("the provided string has invalid character")
+                }
             }
-            $crate::std::result::Result::Err($crate::ParseError::InvalidCharacter(_)) => {
-                $crate::std::panic!("the provided string has invalid character")
-            }
-        };
-        ID
-    }};
+        }
+    };
 }
 
 #[doc(hidden)]
