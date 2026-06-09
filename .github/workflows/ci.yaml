@@ -83,6 +83,9 @@ jobs:
       - name: cargo clippy
         run: cargo clippy --all-targets --all-features -- -D warnings
 
+      - name: Run clippy with pedantic rules
+        run: cargo clippy --all-targets --all-features -- -W clippy::pedantic
+
   test:
     runs-on: ubuntu-24.04
     steps:
