@@ -8,6 +8,9 @@ on:
 
 permissions: {}
 
+env:
+  CARGO_TERM_COLOR: always
+
 jobs:
   rustfmt:
     runs-on: ubuntu-24.04
