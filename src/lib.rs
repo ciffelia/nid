@@ -94,7 +94,7 @@
 
 pub mod alphabet;
 
-use std::{marker::PhantomData, mem::MaybeUninit};
+use std::marker::PhantomData;
 
 use alphabet::{Alphabet, AlphabetExt, Base64UrlAlphabet};
 use rand::RngExt;
@@ -236,25 +236,12 @@ impl<const N: usize, A: Alphabet> Nanoid<N, A> {
     #[must_use]
     #[inline]
     pub fn new_with(mut rng: impl rand::Rng) -> Self {
-        // SAFETY: The `assume_init` is safe because the type we are claiming to have initialized
-        // here is a bunch of `MaybeUninit`s, which do not require initialization.
-        // cf. https://doc.rust-lang.org/std/mem/union.MaybeUninit.html#initializing-an-array-element-by-element
-        let mut buf: [MaybeUninit<u8>; N] = unsafe { MaybeUninit::uninit().assume_init() };
-
-        for b in &mut buf {
-            b.write(A::VALID_SYMBOL_LIST[rng.random_range(0..A::VALID_SYMBOL_LIST.len())]);
-        }
-
-        // Convert `MaybeUninit<u8>` to `u8`. `MaybeUninit::assume_init` doesn't work due to the limitation of the compiler.
-        // cf. https://github.com/rust-lang/rust/issues/61956
-        let buf = {
-            let ptr = &mut buf as *mut _ as *mut [u8; N];
-            // SAFETY: The `MaybeUninit` array is fully initialized and can be read as an array of `u8`.
-            unsafe { ptr.read() }
-        };
+        let inner = std::array::from_fn(|_| {
+            A::VALID_SYMBOL_LIST[rng.random_range(0..A::VALID_SYMBOL_LIST.len())]
+        });
 
         Self {
-            inner: buf,
+            inner,
             _marker: PhantomData,
         }
     }
