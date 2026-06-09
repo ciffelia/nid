@@ -499,7 +499,7 @@ pub use std;
 
 #[cfg(test)]
 mod tests {
-    use std::collections::HashMap;
+    use std::collections::{HashMap, HashSet};
 
     use pretty_assertions::{assert_eq, assert_ne};
 
@@ -604,9 +604,9 @@ mod tests {
             let id1: Nanoid<N, A> = s.parse().unwrap();
             let id2: Nanoid<N, A> = s.parse().unwrap();
 
-            let mut map = HashMap::new();
-            map.insert(id1, ());
-            assert!(map.contains_key(&id2));
+            let mut set = HashSet::new();
+            set.insert(id1);
+            assert!(set.contains(&id2));
         }
 
         inner::<21, Base64UrlAlphabet>("ABCDEFGHIJKLMNOPQ123_");
