@@ -12,7 +12,6 @@ exclude = ["/.github", "/.gitignore"]
 
 [package.metadata.docs.rs]
 all-features = true
-rustdoc-args = ["--cfg", "doc_cfg"]
 
 [dependencies]
 thiserror = "1.0"
