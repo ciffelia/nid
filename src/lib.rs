@@ -278,6 +278,8 @@ impl<const N: usize, A: Alphabet> Nanoid<N, A> {
 
         // This conversion is copied from the `TryFrom` implementation. We can't call `try_from` here because it's not const.
         // https://github.com/rust-lang/rust/blob/7cf61ebde7b22796c69757901dd346d0fe70bd97/library/core/src/array/mod.rs#L250-L264
+        // Once this crate's MSRV reaches Rust 1.93, this can be replaced with `<[T]>::as_array`.
+        // https://github.com/rust-lang/rust/blob/ac68faa20c58cbccd01ee7208bf3b6e93a7d7f96/library/core/src/array/mod.rs#L301-L310
         let buf = if s.len() == N {
             let ptr = s.as_ptr() as *const [u8; N];
             // SAFETY: ok because we just checked that the length fits
