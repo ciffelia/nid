@@ -54,7 +54,32 @@
 /// # Ok::<(), Box<dyn std::error::Error>>(())
 /// ```
 ///
-/// Note that the alphabet must contain only ASCII characters. If you use an alphabet with non-ASCII characters, the compilation error will occur.
+/// Note that the alphabet must be non-empty and contain only unique ASCII characters.
+/// A compilation error occurs if any of these requirements is violated.
+///
+/// ```compile_fail
+/// use nid::{alphabet::Alphabet, Nanoid};
+///
+/// struct CustomAlphabet;
+///
+/// impl Alphabet for CustomAlphabet {
+///     const SYMBOL_LIST: &'static [u8] = b"";
+/// }
+///
+/// let id: Nanoid<21, CustomAlphabet> = Nanoid::new(); // Compilation error: alphabet must not be empty
+/// ```
+///
+/// ```compile_fail
+/// use nid::{alphabet::Alphabet, Nanoid};
+///
+/// struct CustomAlphabet;
+///
+/// impl Alphabet for CustomAlphabet {
+///     const SYMBOL_LIST: &'static [u8] = b"aabc";
+/// }
+///
+/// let id: Nanoid<21, CustomAlphabet> = Nanoid::new(); // Compilation error: found duplicate symbol in alphabet
+/// ```
 ///
 /// ```compile_fail
 /// use nid::{alphabet::Alphabet, Nanoid};
@@ -88,6 +113,8 @@ pub(crate) trait AlphabetExt {
 
 impl<A: Alphabet> AlphabetExt for A {
     const VALID_SYMBOL_LIST: &'static [u8] = {
+        assert!(!A::SYMBOL_LIST.is_empty(), "alphabet must not be empty");
+        assert_all_unique(A::SYMBOL_LIST);
         assert_all_ascii(A::SYMBOL_LIST);
         A::SYMBOL_LIST
     };
@@ -101,6 +128,18 @@ impl<A: Alphabet> AlphabetExt for A {
         }
         symbols_map
     };
+}
+
+/// Assert that all elements are unique.
+const fn assert_all_unique(s: &[u8]) {
+    let mut seen = [false; 256];
+    let mut i = 0;
+    while i < s.len() {
+        let symbol = s[i] as usize;
+        assert!(!seen[symbol], "found duplicate symbol in alphabet");
+        seen[symbol] = true;
+        i += 1;
+    }
 }
 
 /// Assert that all elements are ASCII characters.
