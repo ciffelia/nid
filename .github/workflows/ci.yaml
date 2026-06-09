@@ -12,8 +12,6 @@ permissions:
 
 env:
   RUST_TOOLCHAIN: "1.96.0"
-  RUST_TOOLCHAIN_RUSTFMT: nightly
-  RUST_TOOLCHAIN_RUSTDOC: nightly
   CARGO_TERM_COLOR: always
 
 jobs:
@@ -24,11 +22,11 @@ jobs:
         with:
           persist-credentials: false
 
-      - name: Setup Rust
+      - name: Setup nightly Rust
         run: |
           rustup set profile minimal
-          rustup toolchain install "$RUST_TOOLCHAIN_RUSTFMT" --component rustfmt
-          rustup override set "$RUST_TOOLCHAIN_RUSTFMT"
+          rustup toolchain install nightly --profile minimal --component rustfmt
+          rustup override set nightly
 
       - name: cargo fmt
         run: cargo fmt --all -- --check
@@ -142,11 +140,11 @@ jobs:
         with:
           persist-credentials: false
 
-      - name: Setup Rust
+      - name: Setup nightly Rust
         run: |
           rustup set profile minimal
-          rustup toolchain install "$RUST_TOOLCHAIN_RUSTDOC"
-          rustup override set "$RUST_TOOLCHAIN_RUSTDOC"
+          rustup toolchain install nightly --profile minimal --component rustdoc
+          rustup override set nightly
 
       - name: cargo doc
         run: cargo rustdoc --all-features -- --document-private-items --cfg doc_auto_cfg
