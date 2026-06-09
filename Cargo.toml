@@ -2,7 +2,7 @@
 name = "nid"
 version = "3.0.0"
 edition = "2021"
-rust-version = "1.71"
+rust-version = "1.61"
 description = "Generate and parse Nano IDs"
 repository = "https://github.com/ciffelia/nid"
 license = "MIT OR Apache-2.0"
@@ -14,7 +14,7 @@ exclude = ["/.github", "/.gitignore"]
 all-features = true
 
 [dependencies]
-thiserror = "2.0.18"
+thiserror = "1.0"
 serde = { version = "1.0", optional = true }
 rand = "0.8.5"
 zeroize = { version = "1.7", features = ["zeroize_derive"], optional = true }
