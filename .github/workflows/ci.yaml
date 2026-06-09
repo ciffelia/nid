@@ -63,10 +63,10 @@ jobs:
 
       - name: Setup Rust
         run: |
-          export RUST_TOOLCHAIN_MSRV=$(cargo read-manifest | jq -r '.rust_version')
+          msrv=$(cargo read-manifest | jq -r '.rust_version')
           rustup set profile minimal
-          rustup toolchain install "$RUST_TOOLCHAIN_MSRV"
-          rustup override set "$RUST_TOOLCHAIN_MSRV"
+          rustup toolchain install "$msrv"
+          rustup override set "$msrv"
 
       - uses: Swatinem/rust-cache@c19371144df3bb44fab255c43d04cbc2ab54d1c4 # v2.9.1
 
@@ -123,10 +123,10 @@ jobs:
 
       - name: Setup Rust
         run: |
-          export RUST_TOOLCHAIN_MSRV=$(cargo read-manifest | jq -r '.rust_version')
+          msrv=$(cargo read-manifest | jq -r '.rust_version')
           rustup set profile minimal
-          rustup toolchain install "$RUST_TOOLCHAIN_MSRV"
-          rustup override set "$RUST_TOOLCHAIN_MSRV"
+          rustup toolchain install "$msrv"
+          rustup override set "$msrv"
 
       - uses: Swatinem/rust-cache@c19371144df3bb44fab255c43d04cbc2ab54d1c4 # v2.9.1
 
