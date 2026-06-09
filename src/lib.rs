@@ -236,9 +236,8 @@ impl<const N: usize, A: Alphabet> Nanoid<N, A> {
     #[must_use]
     #[inline]
     pub fn new_with(mut rng: impl rand::Rng) -> Self {
-        let inner = std::array::from_fn(|_| {
-            A::VALID_SYMBOL_LIST[rng.random_range(0..A::VALID_SYMBOL_LIST.len())]
-        });
+        let distr = rand::distr::Uniform::try_from(0..A::VALID_SYMBOL_LIST.len()).unwrap();
+        let inner = std::array::from_fn(|_| A::VALID_SYMBOL_LIST[rng.sample(distr)]);
 
         Self {
             inner,
