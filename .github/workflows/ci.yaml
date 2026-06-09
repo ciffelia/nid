@@ -124,7 +124,7 @@ jobs:
       - name: Setup nightly Rust
         run: |
           rustup set profile minimal
-          rustup toolchain install nightly --profile minimal --component rustdoc
+          rustup toolchain install nightly --profile minimal
           rustup override set nightly
 
       - name: cargo doc
