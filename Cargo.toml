@@ -20,5 +20,5 @@ rand = "0.8.6"
 zeroize = { version = "1.8.2", features = ["zeroize_derive"], optional = true }
 
 [dev-dependencies]
-serde_json = "1.0"
-pretty_assertions = "1.4"
+serde_json = "1.0.150"
+pretty_assertions = "1.4.1"
