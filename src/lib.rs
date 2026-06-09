@@ -215,7 +215,7 @@ impl<const N: usize, A: Alphabet> Nanoid<N, A> {
     #[allow(clippy::new_without_default)]
     #[must_use]
     pub fn new() -> Self {
-        Self::new_with(rand::thread_rng())
+        Self::new_with(rand::rng())
     }
 
     /// Generate a new Nano ID using the provided random number generator.
@@ -240,9 +240,8 @@ impl<const N: usize, A: Alphabet> Nanoid<N, A> {
         // cf. https://doc.rust-lang.org/std/mem/union.MaybeUninit.html#initializing-an-array-element-by-element
         let mut buf: [MaybeUninit<u8>; N] = unsafe { MaybeUninit::uninit().assume_init() };
 
-        let distr = rand::distributions::Uniform::from(0..A::VALID_SYMBOL_LIST.len());
         for b in &mut buf {
-            b.write(A::VALID_SYMBOL_LIST[rng.sample(distr)]);
+            b.write(A::VALID_SYMBOL_LIST[rng.random_range(0..A::VALID_SYMBOL_LIST.len())]);
         }
 
         // Convert `MaybeUninit<u8>` to `u8`. `MaybeUninit::assume_init` doesn't work due to the limitation of the compiler.
