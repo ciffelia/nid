@@ -8,4 +8,10 @@
     ":dependencyDashboardApproval",
     ":disableVulnerabilityAlerts",
   ],
+  packageRules: [
+    {
+      matchPackageNames: ["*"],
+      enabled: false,
+    },
+  ],
 }
