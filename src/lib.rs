@@ -230,7 +230,7 @@ impl<const N: usize, A: Alphabet> Nanoid<N, A> {
     ///
     /// ```
     /// use nid::Nanoid;
-    /// let id: Nanoid = Nanoid::new_with(rand::thread_rng());
+    /// let id: Nanoid = Nanoid::new_with(rand::rng());
     /// ```
     #[must_use]
     #[inline]
