@@ -1,6 +1,6 @@
 [package]
 name = "nid"
-version = "4.0.0"
+version = "5.0.0"
 edition = "2024"
 rust-version = "1.85"
 description = "Generate and parse Nano IDs"
